@@ -110,33 +110,75 @@
     var p = points.map(function (v) { return project(v, view); });
     return '<path d="' + p.map(function (v, i) { return (i ? 'L' : 'M') + n(v.x) + ' ' + n(v.y); }).join('') + '" fill="none" stroke="' + color + '" stroke-width="' + width + '" stroke-linecap="round" stroke-linejoin="round"' + (extra || '') + '/>';
   }
+  // Tapered rounded segments keep their centerline endpoints at the solver joints.
+  function capsule(a, b, startRadius, endRadius, fill, outline) {
+    var dx = b.x - a.x, dy = b.y - a.y, length = Math.sqrt(dx * dx + dy * dy);
+    if (length < .001) return '<circle cx="' + n(a.x) + '" cy="' + n(a.y) + '" r="' + n(startRadius) + '" fill="' + fill + '" stroke="' + C.ink + '" stroke-width="' + n(outline) + '"/>';
+    var ux = dx / length, uy = dy / length, px = -uy, py = ux;
+    function xy(x, y) { return n(x) + ' ' + n(y); }
+    var path = 'M' + xy(a.x + px * startRadius, a.y + py * startRadius) +
+      'L' + xy(b.x + px * endRadius, b.y + py * endRadius) +
+      'Q' + xy(b.x + ux * endRadius * 1.65, b.y + uy * endRadius * 1.65) + ' ' + xy(b.x - px * endRadius, b.y - py * endRadius) +
+      'L' + xy(a.x - px * startRadius, a.y - py * startRadius) +
+      'Q' + xy(a.x - ux * startRadius * 1.65, a.y - uy * startRadius * 1.65) + ' ' + xy(a.x + px * startRadius, a.y + py * startRadius) + 'Z';
+    return '<path d="' + path + '" fill="' + fill + '" stroke="' + C.ink + '" stroke-width="' + n(outline) + '" stroke-linejoin="round"/>';
+  }
   function person(input, frame, view, opts) {
     opts = opts || {};
     if (!frame.pose || !frame.pose.hip || !frame.pose.shoulder) return '';
     var d = dims(input), hip = frame.pose.hip, shoulder = frame.pose.shoulder, a = {
       lh: { x: shoulder.x - d.shoulderWidth / 2, y: shoulder.y }, rh: { x: shoulder.x + d.shoulderWidth / 2, y: shoulder.y },
       lf: { x: hip.x - d.hipWidth / 2, y: hip.y }, rf: { x: hip.x + d.hipWidth / 2, y: hip.y }
-    }, width = clamp(d.height * view.scale * .024, 5, 12), out = '';
-    ['lf', 'rf'].forEach(function (key) { if (frame.points[key]) out += bone([a[key], joint(a[key], frame.points[key], d.leg, key === 'lf' ? -1 : 1), frame.points[key]], view, key === 'rf' ? C.purple : C.ink, width); });
-    var torso = [a.lh, a.rh, a.rf, a.lf].map(function (pt) { return project(pt, view); });
-    out += '<path d="' + torso.map(function (pt, i) { return (i ? 'L' : 'M') + n(pt.x) + ' ' + n(pt.y); }).join('') + 'Z" fill="#fff" stroke="' + C.ink + '" stroke-width="3.5" stroke-linejoin="round"/>';
-    out += bone([shoulder, hip], view, C.line, 2);
-    ['lh', 'rh'].forEach(function (key) { if (frame.points[key]) out += bone([a[key], joint(a[key], frame.points[key], d.arm, key === 'lh' ? -1 : 1), frame.points[key]], view, key === 'rh' ? C.purple : C.ink, width); });
-    var neck = project({ x: shoulder.x, y: shoulder.y + d.height * .035 }, view), head = project({ x: shoulder.x, y: shoulder.y + d.height * .105 }, view), radius = d.height * .057 * view.scale;
-    out += '<path d="M' + n(neck.x) + ' ' + n(neck.y) + 'L' + n(project(shoulder, view).x) + ' ' + n(project(shoulder, view).y) + '" stroke="' + C.ink + '" stroke-width="' + n(width * .7) + '"/><circle cx="' + n(head.x) + '" cy="' + n(head.y) + '" r="' + n(radius) + '" fill="#fff" stroke="' + C.ink + '" stroke-width="3"/>';
+    }, unit = d.height * view.scale, outline = clamp(unit * .0065, 1.4, 2.8), out = '';
+    var paint = { left: '#ba9ad8', right: '#7928ca', leftLeg: '#c2aad7', rightLeg: '#8b54b6', body: '#e8dcf1', shorts: '#b99ad3', neck: '#ad91c2', face: '#d4bedf', hair: '#4b3659' };
+    function limbShape(key, isLeg) {
+      var endpoint = frame.points[key]; if (!endpoint) return '';
+      var left = key[0] === 'l', j = joint(a[key], endpoint, isLeg ? d.leg : d.arm, left ? -1 : 1);
+      var start = project(a[key], view), bend = project(j, view), end = project(endpoint, view);
+      var fill = isLeg ? (left ? paint.leftLeg : paint.rightLeg) : (left ? paint.left : paint.right);
+      var upper = unit * (isLeg ? .029 : .023), knee = unit * (isLeg ? .025 : .019), wrist = unit * (isLeg ? .017 : .014);
+      return '<g class="route-body-segment" data-segment="' + key + '" data-joint-x="' + n(j.x) + '" data-joint-y="' + n(j.y) + '">' +
+        capsule(start, bend, upper, knee, fill, outline) + capsule(bend, end, knee, wrist, fill, outline) +
+        '<circle cx="' + n(bend.x) + '" cy="' + n(bend.y) + '" r="' + n(knee * .57) + '" fill="' + fill + '"/>' + '</g>';
+    }
+    // Legs are behind the pelvis. The joint positions are unchanged by the silhouette.
+    out += limbShape('lf', true) + limbShape('rf', true);
+    var hp = project(hip, view), sp = project(shoulder, view), ls = project(a.lh, view), rs = project(a.rh, view), lp = project(a.lf, view), rp = project(a.rf, view);
+    var waist = project(pointMix(shoulder, hip, .68), view), waistHalf = unit * .064;
+    var neckTop = project({ x: shoulder.x, y: shoulder.y + d.height * .061 }, view);
+    out += capsule(sp, neckTop, unit * .032, unit * .028, paint.neck, outline);
+    var trunk = 'M' + n(ls.x) + ' ' + n(ls.y) +
+      'Q' + n(sp.x) + ' ' + n(sp.y - unit * .045) + ' ' + n(rs.x) + ' ' + n(rs.y) +
+      'C' + n(rs.x + unit * .012) + ' ' + n(rs.y + unit * .055) + ' ' + n(waist.x + waistHalf) + ' ' + n(waist.y - unit * .035) + ' ' + n(waist.x + waistHalf) + ' ' + n(waist.y) +
+      'Q' + n(rp.x + unit * .023) + ' ' + n(hp.y - unit * .005) + ' ' + n(rp.x + unit * .009) + ' ' + n(hp.y + unit * .028) +
+      'Q' + n(hp.x) + ' ' + n(hp.y + unit * .061) + ' ' + n(lp.x - unit * .009) + ' ' + n(hp.y + unit * .028) +
+      'Q' + n(lp.x - unit * .023) + ' ' + n(hp.y - unit * .005) + ' ' + n(waist.x - waistHalf) + ' ' + n(waist.y) +
+      'C' + n(waist.x - waistHalf) + ' ' + n(waist.y - unit * .035) + ' ' + n(ls.x - unit * .012) + ' ' + n(ls.y + unit * .055) + ' ' + n(ls.x) + ' ' + n(ls.y) + 'Z';
+    out += '<path class="route-body-torso" d="' + trunk + '" fill="' + paint.body + '" stroke="' + C.ink + '" stroke-width="' + n(outline) + '" stroke-linejoin="round"/>';
+    // A soft shirt seam and a curved waistband make the trunk readable without moving it.
+    var chest = project(pointMix(shoulder, hip, .31), view), belt = project(pointMix(shoulder, hip, .84), view), beltHalf = unit * .066;
+    out += '<path d="M' + n(sp.x) + ' ' + n(sp.y + unit * .015) + 'L' + n(belt.x) + ' ' + n(belt.y) + 'M' + n(chest.x - unit * .055) + ' ' + n(chest.y) + 'Q' + n(chest.x) + ' ' + n(chest.y + unit * .018) + ' ' + n(chest.x + unit * .055) + ' ' + n(chest.y) + '" fill="none" stroke="#ceb7df" stroke-width="' + n(outline * .65) + '"/>';
+    out += '<path d="M' + n(belt.x - beltHalf) + ' ' + n(belt.y) + 'Q' + n(belt.x) + ' ' + n(belt.y + unit * .019) + ' ' + n(belt.x + beltHalf) + ' ' + n(belt.y) +
+      'L' + n(rp.x + unit * .009) + ' ' + n(hp.y + unit * .028) + 'Q' + n(hp.x) + ' ' + n(hp.y + unit * .061) + ' ' + n(lp.x - unit * .009) + ' ' + n(hp.y + unit * .028) + 'Z" fill="' + paint.shorts + '" stroke="' + C.ink + '" stroke-width="' + n(outline * .7) + '" stroke-linejoin="round"/>';
+    var head = project({ x: shoulder.x, y: shoulder.y + d.height * .105 }, view), hx = unit * .059, hy = unit * .073;
+    out += '<ellipse class="route-body-head" cx="' + n(head.x) + '" cy="' + n(head.y) + '" rx="' + n(hx) + '" ry="' + n(hy) + '" fill="' + paint.face + '" stroke="' + C.ink + '" stroke-width="' + n(outline) + '"/>';
+    out += '<path class="route-body-hair" d="M' + n(head.x - hx * .96) + ' ' + n(head.y + hy * .05) + 'Q' + n(head.x - hx * 1.14) + ' ' + n(head.y - hy * 1.13) + ' ' + n(head.x) + ' ' + n(head.y - hy * 1.08) +
+      'Q' + n(head.x + hx * 1.16) + ' ' + n(head.y - hy * 1.12) + ' ' + n(head.x + hx) + ' ' + n(head.y + hy * .04) + 'Q' + n(head.x + hx * .22) + ' ' + n(head.y - hy * .48) + ' ' + n(head.x - hx * .96) + ' ' + n(head.y + hy * .05) + 'Z" fill="' + paint.hair + '"/>';
+    out += limbShape('lh', false) + limbShape('rh', false);
     limbs.forEach(function (key) {
       var pt = frame.points[key]; if (!pt) return;
-      var p = project(pt, view), color = key[0] === 'r' ? C.purple : C.ink;
+      var p = project(pt, view), left = key[0] === 'l', color = left ? paint.left : paint.right, unitShoe = unit / 350;
       out += '<g data-limb="' + key + '" data-contact-id="' + esc(frame.contacts[key]) + '" data-contact-x="' + n(pt.x) + '" data-contact-y="' + n(pt.y) + '">';
-      if (key[1] === 'h') out += '<circle cx="' + n(p.x) + '" cy="' + n(p.y) + '" r="5.5" fill="#fff" stroke="' + color + '" stroke-width="2.5"/>';
-      else out += '<path d="M' + n(p.x - 8) + ' ' + n(p.y - 3) + 'Q' + n(p.x) + ' ' + n(p.y - 10) + ' ' + n(p.x + 11) + ' ' + n(p.y - 3) + 'L' + n(p.x + 10) + ' ' + n(p.y + 2) + 'L' + n(p.x - 9) + ' ' + n(p.y + 2) + 'Z" fill="' + color + '" stroke="#fff" stroke-width="1.5"/>';
-      if (opts.limbLabels !== false) out += label(clamp(p.x + (key[0] === 'r' ? 31 : -31), view.wall.x + 22, view.wall.x + view.wall.width - 22), p.y + (key[1] === 'h' ? 6 : 24), names[key], { anchor: 'middle', size: 13, bold: true, color: color });
+      if (key[1] === 'h') out += '<ellipse cx="' + n(p.x) + '" cy="' + n(p.y) + '" rx="' + n(unit * .024) + '" ry="' + n(unit * .027) + '" fill="' + color + '" stroke="' + C.ink + '" stroke-width="' + n(outline * .75) + '"/>';
+      else out += '<g transform="translate(' + n(p.x) + ' ' + n(p.y) + ') rotate(' + (left ? -8 : 8) + ') scale(' + unitShoe.toFixed(6) + ')"><path d="M-8 -7Q0 -11 7 -5L12 2Q10 9 -9 7L-12 4Z" fill="' + (left ? '#6d527e' : '#4e2d68') + '" stroke="' + C.ink + '" stroke-width="1.6"/><path d="M-9 4Q1 7 10 2" fill="none" stroke="#eadcf6" stroke-width="2" stroke-linecap="round"/></g>';
+      // This small contact mark is at the exact solver endpoint, independent of shoe/hand volume.
+      out += '<circle class="route-contact-anchor" cx="' + n(p.x) + '" cy="' + n(p.y) + '" r="' + n(Math.max(1.5, unit * .005)) + '" fill="#fff" fill-opacity=".8"/>';
+      if (opts.limbLabels !== false) out += label(clamp(p.x + (left ? -31 : 31), view.wall.x + 22, view.wall.x + view.wall.width - 22), p.y + (key[1] === 'h' ? 6 : 24), names[key], { anchor: 'middle', size: 13, bold: true, color: left ? '#65457e' : C.purple });
       out += '</g>';
     });
-    var hp = project(hip, view), sp = project(shoulder, view);
     out += '<circle cx="' + n(hp.x) + '" cy="' + n(hp.y) + '" r="5" fill="' + C.magenta + '" stroke="#fff" stroke-width="2"/>';
     if (opts.bodyLabels !== false) out += label(hp.x + 12, hp.y + 7, '髋', { size: 13, color: C.magenta }) + label(sp.x + 12, sp.y - 8, '肩', { size: 13 });
-    return '<g class="route-climber" pointer-events="none">' + out + '</g>';
+    return '<g class="route-climber" data-figure-style="demo-purple" pointer-events="none">' + out + '</g>';
   }
   function motion(input, view, options) {
     if (!options.move) return '';
@@ -153,10 +195,10 @@
     var opts = options || {}, view = viewport(input), frame = frameAt(input, state, opts);
     var holdOpts = { showLabels: opts.showLabels !== false, showStarts: false, interactive: false, selectedId: opts.selectedId };
     var heading = opts.stepLabel || '候选动作 · 二维姿态示意';
-    var content = grid(input, view, { heading: heading, footnote: '黑色：左侧 · 紫色：右侧 · 髋点不是精确重心' });
+    var content = grid(input, view, { heading: heading, footnote: '浅紫：左侧 · 深紫：右侧 · 髋点不是精确重心' });
     content += motion(input, view, opts) + holds(input, view, holdOpts) + person(input, frame, view, opts);
     content += label(view.wall.x + 12, view.wall.y + 25, frame.phase, { size: 14, color: C.purple, bold: true });
-    return shell(view, heading, '手脚位置对应岩点，黑色为左侧，紫色为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content);
+    return shell(view, heading, '手脚位置对应岩点，浅紫为左侧，深紫为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content);
   }
   function wrap(value, max) {
     var chars = Array.from(String(value || '')), lines = [], line = '', width = 0;
