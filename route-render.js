@@ -99,6 +99,25 @@
     });
     return { pose: pose, points: points, phase: phase, progress: t, contacts: currentContacts };
   }
+  function measureArms(input, frame) {
+    var result = { left: null, right: null };
+    if (!frame || !frame.pose || !frame.pose.shoulder || !frame.points) return result;
+    var shoulder = frame.pose.shoulder, d = dims(input);
+    if (![shoulder.x, shoulder.y].every(Number.isFinite)) return result;
+    ['left', 'right'].forEach(function (side) {
+      var key = side === 'left' ? 'lh' : 'rh', point = frame.points[key];
+      if (!point || ![point.x, point.y].every(Number.isFinite)) return;
+      var x = shoulder.x + (side === 'left' ? -1 : 1) * d.shoulderWidth / 2;
+      var extensionRatio = Math.hypot(point.x - x, point.y - shoulder.y) / d.arm;
+      result[side] = { extensionRatio: extensionRatio, elbowDegrees: 2 * Math.asin(clamp(extensionRatio, 0, 1)) * 180 / Math.PI, belowShoulder: point.y < shoulder.y };
+    });
+    return result;
+  }
+  function armFootnote(input, frame) {
+    var arms = measureArms(input, frame);
+    if (!arms.left || !arms.right) return '浅紫：左侧 · 深紫：右侧 · 髋点不是精确重心';
+    return '左肘 ' + Math.round(arms.left.elbowDegrees) + '° · 右肘 ' + Math.round(arms.right.elbowDegrees) + '° · 180°表示图示伸直';
+  }
   function joint(a, b, length, side) {
     var dx = b.x - a.x, dy = b.y - a.y, dist = Math.sqrt(dx * dx + dy * dy), half = length / 2;
     if (dist < .00001) return { x: a.x + side * half, y: a.y };
@@ -129,7 +148,7 @@
     var d = dims(input), hip = frame.pose.hip, shoulder = frame.pose.shoulder, a = {
       lh: { x: shoulder.x - d.shoulderWidth / 2, y: shoulder.y }, rh: { x: shoulder.x + d.shoulderWidth / 2, y: shoulder.y },
       lf: { x: hip.x - d.hipWidth / 2, y: hip.y }, rf: { x: hip.x + d.hipWidth / 2, y: hip.y }
-    }, unit = d.height * view.scale, outline = clamp(unit * .0065, 1.4, 2.8), out = '';
+    }, unit = d.height * view.scale, outline = clamp(unit * .0065, 1.4, 2.8), out = '', armMeasures = measureArms(input, frame);
     var paint = { left: '#ba9ad8', right: '#7928ca', leftLeg: '#c2aad7', rightLeg: '#8b54b6', body: '#e8dcf1', shorts: '#b99ad3', neck: '#ad91c2', face: '#d4bedf', hair: '#4b3659' };
     function limbShape(key, isLeg) {
       var endpoint = frame.points[key]; if (!endpoint) return '';
@@ -137,7 +156,7 @@
       var start = project(a[key], view), bend = project(j, view), end = project(endpoint, view);
       var fill = isLeg ? (left ? paint.leftLeg : paint.rightLeg) : (left ? paint.left : paint.right);
       var upper = unit * (isLeg ? .029 : .023), knee = unit * (isLeg ? .025 : .019), wrist = unit * (isLeg ? .017 : .014);
-      return '<g class="route-body-segment" data-segment="' + key + '" data-joint-x="' + n(j.x) + '" data-joint-y="' + n(j.y) + '">' +
+      return '<g class="route-body-segment" data-segment="' + key + '"' + (!isLeg && armMeasures[left ? 'left' : 'right'] ? ' data-elbow-degrees="' + n(armMeasures[left ? 'left' : 'right'].elbowDegrees) + '"' : '') + ' data-joint-x="' + n(j.x) + '" data-joint-y="' + n(j.y) + '">' +
         capsule(start, bend, upper, knee, fill, outline) + capsule(bend, end, knee, wrist, fill, outline) +
         '<circle cx="' + n(bend.x) + '" cy="' + n(bend.y) + '" r="' + n(knee * .57) + '" fill="' + fill + '"/>' + '</g>';
     }
@@ -217,7 +236,7 @@
     var opts = options || {}, view = viewport(input), frame = frameAt(input, state, opts);
     var holdOpts = { showLabels: opts.showLabels !== false, showStarts: false, interactive: false, selectedId: opts.selectedId };
     var heading = opts.stepLabel || '候选动作 · 二维姿态示意';
-    var content = grid(input, view, { heading: heading, footnote: '浅紫：左侧 · 深紫：右侧 · 髋点不是精确重心' });
+    var content = grid(input, view, { heading: heading, footnote: armFootnote(input, frame) });
     content += motion(input, view, opts) + holds(input, view, holdOpts) + person(input, frame, view, opts);
     content += label(view.wall.x + 12, view.wall.y + 25, frame.phase, { size: 14, color: C.purple, bold: true });
     return shell(view, heading, '手脚位置对应岩点，浅紫为左侧，深紫为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content);
@@ -240,7 +259,7 @@
       var x = margin + (i % columns) * (cellWidth + gap), y = 120 + Math.floor(i / columns) * (cellHeight + gap);
       out += '<g transform="translate(' + x + ' ' + n(y) + ')"><rect width="' + cellWidth + '" height="' + n(cellHeight) + '" rx="10" fill="#fff" stroke="' + C.line + '"/>';
       out += text(16, 29, i === 0 ? '起始姿态' : '第 ' + i + ' 步 · ' + names[(moves[i - 1] || {}).limb], { size: 19, bold: true, color: C.purple });
-      var frame = frameAt(input, state, {}), draw = grid(input, view, { heading: '', footnote: '' }) + holds(input, view, { interactive: false, showLabels: true, showStarts: false }) + person(input, frame, view, { limbLabels: false, bodyLabels: false });
+      var frame = frameAt(input, state, {}), draw = grid(input, view, { heading: '', footnote: armFootnote(input, frame) }) + holds(input, view, { interactive: false, showLabels: true, showStarts: false }) + person(input, frame, view, { limbLabels: false, bodyLabels: false });
       out += '<g transform="translate(0 40) scale(' + drawScale.toFixed(6) + ')">' + draw + '</g>';
       notes[i].slice(0, 6).forEach(function (line, j) { out += text(16, 40 + diagramHeight + 22 + j * 23, line + (j === 5 && notes[i].length > 6 ? '…' : ''), { size: 16 }); });
       out += '</g>';
@@ -248,5 +267,5 @@
     out += text(margin, height - 29, '原创教学示意 · MIT · https://scott1743.github.io/climbing-guide/', { size: 16, color: C.muted });
     return shell({ viewBox: '0 0 ' + width + ' ' + n(height), width: width, height: height }, 'Climbing Guide 候选攀岩解法分镜', '包含起始姿态与每一步手脚移动后的状态。候选顺序不等于真实最佳解法或安全认证。', out, ' width="' + width + '" height="' + n(height) + '"');
   }
-  return { viewport: viewport, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, frameAt: frameAt };
+  return { viewport: viewport, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, frameAt: frameAt };
 });

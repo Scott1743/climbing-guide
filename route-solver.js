@@ -9,6 +9,7 @@
   const LIMBS = ['lh', 'rh', 'lf', 'rf'];
   const NAMES = { lh: '左手', rh: '右手', lf: '左脚', rf: '右脚' };
   const EPS = 1e-7;
+  const ARM_TARGET = 0.999;
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
   const hand = limb => limb.endsWith('h');
@@ -65,6 +66,45 @@
 
   function context(input) {
     return { input, dim: dimensions(input), map: new Map(input.holds.map(p => [p.id, p])), cache: new Map() };
+  }
+
+  function describeArms(pose, contacts, ctx, movingLimb) {
+    const { map, dim, input } = ctx, entries = {};
+    for (const [key, limb] of [['left', 'lh'], ['right', 'rh']]) {
+      const point = map.get(contacts[limb]);
+      const anchor = { x: pose.shoulder.x + side(limb) * dim.shoulderWidth / 2, y: pose.shoulder.y };
+      const extensionRatio = clamp(dist(anchor, point) / dim.arm, 0, 1);
+      const moving = movingLimb === limb;
+      const low = !moving && point.y < pose.shoulder.y - 0.015 * input.bodyHeight;
+      const extended = extensionRatio >= 0.995;
+      entries[key] = {
+        extensionRatio, elbowDegrees: 2 * Math.asin(extensionRatio) * 180 / Math.PI,
+        role: moving ? 'moving' : 'support',
+        mode: low ? 'low-hand-contact' : extended ? 'extended' : 'bent',
+        reason: moving ? '这只手正在换点，按起点和目标的位置屈伸，不强制伸直。'
+          : low ? '这个手点低于肩，不能按直臂悬挂解释；模型没有验证倒撑或岩点受力。'
+          : extended ? '在保持手脚接触的可行姿势中，这只支撑臂接近伸展；肩和手指仍需主动控制。'
+          : '本次姿势在手脚可达和腿部余量之间保留了屈肘；可通过调整脚点或髋位继续比较。'
+      };
+    }
+    const supports = Object.values(entries).filter(a => a.role === 'support');
+    const extendedCount = supports.filter(a => a.mode === 'extended').length;
+    const low = supports.some(a => a.mode === 'low-hand-contact');
+    const mode = low ? 'low-hand-contact' : hand(movingLimb || '') ? 'hand-transition'
+      : extendedCount === 2 ? 'both-extended' : extendedCount === 1 ? 'one-extended' : 'bent-support';
+    return { ...entries, mode,
+      note: low ? '这里只保留位置可达示意，不把肩下手点解释为省力支撑。'
+        : '优先在可行时伸展支撑臂；这是几何姿势偏好，不是人体耗力测量或最优证明。' };
+  }
+
+  function routePostureCost(pose, movingLimb) {
+    const supportArmCost = ['lh', 'rh'].filter(l => l !== movingLimb)
+      .reduce((sum, limb) => sum + 1.4 * Math.max(0, ARM_TARGET - pose.reach[limb]) ** 2, 0);
+    const legCost = ['lf', 'rf'].reduce((sum, limb) => sum +
+      0.12 * (Math.max(0, pose.reach[limb] - 0.9) / 0.1) ** 2, 0);
+    const lowHandCost = ['left', 'right'].reduce((sum, key) => sum +
+      (pose.armPosture[key].role === 'support' && pose.armPosture[key].mode === 'low-hand-contact' ? 0.6 : 0), 0);
+    return supportArmCost + legCost + lowHandCost;
   }
 
   function startDiagnostic(contacts, ctx) {
@@ -161,14 +201,54 @@
         add(a.x + k * ux - q * uy, a.y + k * uy + q * ux);
         add(a.x + k * ux + q * uy, a.y + k * uy - q * ux);
       }
+      // Feasibility-circle vertices alone favor fully stretched legs, while
+      // their centers favor tightly bent arms. Add the actual posture target:
+      // near-extended support-arm arcs and their intersections with reach and
+      // wall boundaries. A moving hand has no extension target during transfer.
+      const targetArcs = disks.filter(d => hand(d.limb) && (!extra || d.limb !== extra.limb))
+        .map(d => ({ ...d, r: d.r * ARM_TARGET }));
+      const arcIntersections = (a, b) => {
+        const d = dist(a, b);
+        if (d < EPS || d > a.r + b.r + EPS || d < Math.abs(a.r - b.r) - EPS) return;
+        const k = (a.r * a.r - b.r * b.r + d * d) / (2 * d);
+        const q = Math.sqrt(Math.max(0, a.r * a.r - k * k));
+        const ux = (b.x - a.x) / d, uy = (b.y - a.y) / d;
+        add(a.x + k * ux - q * uy, a.y + k * uy + q * ux);
+        add(a.x + k * ux + q * uy, a.y + k * uy - q * ux);
+      };
+      for (let i = 0; i < targetArcs.length; i++) {
+        const a = targetArcs[i];
+        for (let n = 0; n <= 12; n++) {
+          const angle = Math.PI + n * Math.PI / 12;
+          add(a.x + a.r * Math.cos(angle), a.y + a.r * Math.sin(angle));
+        }
+        for (const b of disks) arcIntersections(a, b);
+        for (let j = i + 1; j < targetArcs.length; j++) arcIntersections(a, targetArcs[j]);
+        for (const x of [minX, maxX]) {
+          const q = a.r * a.r - (x - a.x) ** 2;
+          if (q >= -EPS) { const dy = Math.sqrt(Math.max(0, q)); add(x, a.y + dy); add(x, a.y - dy); }
+        }
+        for (const y of [minY, maxY]) {
+          const q = a.r * a.r - (y - a.y) ** 2;
+          if (q >= -EPS) { const dx = Math.sqrt(Math.max(0, q)); add(a.x + dx, y); add(a.x - dx, y); }
+        }
+      }
       for (const p of candidates) {
         if (p.x < minX - EPS || p.x > maxX + EPS || p.y < minY - EPS || p.y > maxY + EPS) continue;
         if (disks.some(d => (p.x - d.x) ** 2 + (p.y - d.y) ** 2 > d.r * d.r + EPS)) continue;
-        let quality = 0.18 * ((p.x - supportMid) / H) ** 2 + 0.08 * Math.abs(lean) / H;
+        let quality = 0.02 * ((p.x - supportMid) / H) ** 2 + 0.01 * Math.abs(lean) / H;
         const reach = {};
         for (const d of disks) {
           const r = dist(p, d) / d.r;
-          quality += hand(d.limb) ? 0.55 * r ** 4 : 0.18 * (r - 0.78) ** 2;
+          if (!hand(d.limb)) quality += 0.30 * (r - 0.78) ** 2 + 3 * Math.max(0, r - 0.92) ** 2;
+          else if (!extra || d.limb !== extra.limb) {
+            quality += 20 * (ARM_TARGET - r) ** 2;
+            const drop = (p.y + torsoY - d.p.y) / H;
+            // Prefer hands at/above the shoulder, so long arms are not obtained
+            // by inventing a downward, mantle-like support. This remains soft:
+            // existing geometric stances are retained and explicitly labelled.
+            if (drop > EPS) quality += 100 + 100 * drop * drop;
+          }
           reach[d.limb] = Math.max(reach[d.limb] || 0, r);
         }
         if (quality < bestQuality) {
@@ -177,6 +257,7 @@
         }
       }
     }
+    if (best) best.armPosture = describeArms(best, contacts, ctx, extra && extra.limb);
     return best;
   }
 
@@ -265,10 +346,10 @@
           const movePose = findPose(node.contacts, ctx, { limb, id: to.id });
           if (!movePose) continue;
           stats.generated++;
-          const distance = dist(from, to), reachCost = Math.max(...Object.values(movePose.reach)) ** 4;
+          const distance = dist(from, to), postureCost = routePostureCost(movePose, limb);
           const matchCost = (contacts.lh === contacts.rh ? 0.18 : 0) + (contacts.lf === contacts.rf ? 0.22 : 0);
           const crossed = map.get(contacts.lh).x > map.get(contacts.rh).x + 0.08 * H || map.get(contacts.lf).x > map.get(contacts.rf).x + 0.08 * H;
-          const g = node.g + 1 + 0.45 * distance / (hand(limb) ? dim.arm : dim.leg) + 0.32 * reachCost + matchCost + (crossed ? 0.35 : 0) + (to.y < from.y ? 0.25 : 0);
+          const g = node.g + 1 + 0.45 * distance / (hand(limb) ? dim.arm : dim.leg) + postureCost + matchCost + (crossed ? 0.35 : 0) + (to.y < from.y ? 0.25 : 0);
           if (seen.has(stateKey) && seen.get(stateKey) <= g + EPS) continue;
           seen.set(stateKey, g);
           const shift = movePose.hip.x - node.pose.hip.x;

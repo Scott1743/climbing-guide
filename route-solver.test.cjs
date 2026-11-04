@@ -38,6 +38,20 @@ function checkReach(pose, contacts, input) {
     const offset = (l[0] === 'l' ? -1 : 1) * H * (hand(l) ? .10 : .065);
     const length = hand(l) ? (input.armSpan - .20 * H) / 2 : .48 * H;
     assert(Math.hypot(target.x - center.x - offset, target.y - center.y) <= length + 1e-6, `${l} exceeds anatomical reach`);
+    if (hand(l)) {
+      const meta = pose.armPosture[l === 'lh' ? 'left' : 'right'];
+      assert(['support', 'moving'].includes(meta.role));
+      assert(meta.reason.length > 10);
+      // During a hand transition metadata describes the departing hand, while
+      // this checker is also called on its arrival contact: compare the fixed
+      // support arm in both calls, and both arms in every stationary stance.
+      if (meta.role === 'support') {
+        const ratio = Math.min(1, Math.hypot(target.x - center.x - offset, target.y - center.y) / length);
+        assert(Math.abs(meta.extensionRatio - ratio) < 1e-9);
+        assert(Math.abs(meta.elbowDegrees - 2 * Math.asin(ratio) * 180 / Math.PI) < 1e-4, 'angle metadata must match geometry (allow inverse-sine rounding at full extension)');
+        if (target.y < pose.shoulder.y - .015 * H) assert.equal(meta.mode, 'low-hand-contact');
+      }
+    }
   }
   assert(Math.abs(Math.hypot(pose.shoulder.x - pose.hip.x, pose.shoulder.y - pose.hip.y) - .28 * H) < 1e-6);
 }
@@ -188,4 +202,78 @@ assert.equal(Solver.solve(noPairProof).diagnostic.pair, null, 'do not invent a p
 
 const allPurposeExample = copy(example); allPurposeExample.holds.forEach(p => { p.type = 'both'; });
 checkRouteResult(Solver.solve(allPurposeExample), allPurposeExample);
-console.log(`PASS: ${result.routes.length} complete routes; geometry/type/contact invariants; transition reach; size sensitivity; unreachable/invalid inputs; left/right traverse; required downward setup; evidence-based start diagnostic.`);
+
+function staticFixture(points) {
+  return { width: 3, height: 4, bodyHeight: 1.7, armSpan: 1.7,
+    holds: points.map(([id, x, y, type]) => ({ id, x, y, type })),
+    starts: { lh: 'L', rh: 'R', lf: 'FL', rf: 'FR' }, finish: 'R' };
+}
+const symmetric = staticFixture([
+  ['L', 1.33, 2.4, 'hand'], ['R', 1.67, 2.4, 'hand'],
+  ['FL', 1.2, .65, 'foot'], ['FR', 1.8, .65, 'foot']
+]);
+const symmetricPose = Solver.poseFor(symmetric.starts, symmetric);
+checkReach(symmetricPose, symmetric.starts, symmetric);
+assert.equal(symmetricPose.armPosture.mode, 'both-extended');
+assert(symmetricPose.armPosture.left.elbowDegrees >= 170 && symmetricPose.armPosture.right.elbowDegrees >= 170);
+assert(symmetricPose.reach.lf < .9 && symmetricPose.reach.rf < .9, 'straight arms must not require artificial straight legs in the roomy fixture');
+assert(symmetricPose.shoulder.y < 2.4);
+
+const asymmetric = staticFixture([
+  ['L', 1.3, 2.2, 'hand'], ['R', 1.7, 2.8, 'hand'],
+  ['FL', 1.1, 1.1, 'foot'], ['FR', 1.9, 1.1, 'foot']
+]);
+const asymmetricPose = Solver.poseFor(asymmetric.starts, asymmetric);
+checkReach(asymmetricPose, asymmetric.starts, asymmetric);
+assert.equal(asymmetricPose.armPosture.mode, 'one-extended');
+assert(asymmetricPose.armPosture.right.elbowDegrees >= 170);
+assert(asymmetricPose.armPosture.left.elbowDegrees < 150);
+assert(asymmetricPose.shoulder.y <= 2.2 + 1e-6, 'do not make the lower hand look straight by moving it below the shoulder');
+
+const constrained = staticFixture([
+  ['L', 1.33, 1.7, 'hand'], ['R', 1.67, 1.7, 'hand'],
+  ['FL', .9, 1.2, 'foot'], ['FR', 2.1, 1.2, 'foot']
+]);
+const constrainedPose = Solver.poseFor(constrained.starts, constrained);
+checkReach(constrainedPose, constrained.starts, constrained);
+assert.equal(constrainedPose.armPosture.mode, 'bent-support');
+// Independent upper bound while hands remain at/above shoulders:
+// foot reach restricts hip x to [1.1735,1.8265], foot height requires y>=1.132,
+// and the hand-center disks are x in [1.364,1.636], y<=1.243843.
+// Thus neither arm can reach the near-straight threshold in this stance.
+const constrainedArmUpperBound = Math.hypot(1.636 - 1.1735, 1.243843 - 1.132) / .68;
+assert(constrainedArmUpperBound < .71);
+assert(constrainedPose.armPosture.left.extensionRatio < .71 && constrainedPose.armPosture.right.extensionRatio < .71);
+assert(constrainedPose.armPosture.left.reason.includes('保留了屈肘'));
+
+// Preserve a previously geometrically valid shoulder-low contact; label its
+// limitation instead of fabricating a suspension posture or rejecting input.
+const lowHands = staticFixture([
+  ['L', 1.33, 1.5, 'hand'], ['R', 1.67, 1.5, 'hand'],
+  ['FL', 1.2, 1.2, 'foot'], ['FR', 1.8, 1.2, 'foot']
+]);
+const lowPose = Solver.poseFor(lowHands.starts, lowHands);
+checkReach(lowPose, lowHands.starts, lowHands);
+assert.equal(lowPose.armPosture.mode, 'low-hand-contact');
+
+const reportedScreenshot = {
+  width: 6, height: 4, bodyHeight: 1.7, armSpan: 1.7,
+  holds: [['H1', .55, 2.92], ['H2', 1.05, 1.35], ['H3', 1.65, 2.83], ['H4', 2.4, 1.4], ['H5', 2.8, 2.9], ['H6', .35, 1.25]]
+    .map(([id, x, y]) => ({ id, x, y, type: 'both' })),
+  starts: { lh: 'H3', rh: 'H3', lf: 'H2', rf: 'H4' }, finish: 'H5'
+};
+const reportedPose = Solver.poseFor(reportedScreenshot.starts, reportedScreenshot);
+checkReach(reportedPose, reportedScreenshot.starts, reportedScreenshot);
+assert(reportedPose.armPosture.left.elbowDegrees >= 170 && reportedPose.armPosture.right.elbowDegrees >= 170);
+assert(reportedPose.hip.y < 1.75, 'the reported start should use its available lower hip position');
+assert(reportedPose.reach.lf < .9 && reportedPose.reach.rf < .9);
+for (const route of result.routes) for (const move of route.moves) if (hand(move.limb)) {
+  const moving = move.limb === 'lh' ? 'left' : 'right';
+  assert.equal(move.movePose.armPosture[moving].role, 'moving');
+  assert.equal(move.movePose.armPosture[moving === 'left' ? 'right' : 'left'].role, 'support');
+}
+
+console.log(`PASS: geometric/contact/type invariants; default and left/right traverse; required descent; start diagnostics; symmetric straight arms; unequal-height support; constrained bent-arm case; shoulder-low contact labelling; reported screenshot posture.`);
+console.log(JSON.stringify({ symmetricElbows: [symmetricPose.armPosture.left.elbowDegrees, symmetricPose.armPosture.right.elbowDegrees].map(n => +n.toFixed(1)),
+  screenshotElbows: [reportedPose.armPosture.left.elbowDegrees, reportedPose.armPosture.right.elbowDegrees].map(n => +n.toFixed(1)),
+  defaultMs: result.stats.elapsedMs, rightTraverseMs: rightResult.stats.elapsedMs, leftTraverseMs: leftResult.stats.elapsedMs }));
