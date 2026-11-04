@@ -4,6 +4,14 @@
 
 [在线阅读](https://scott1743.github.io/climbing-guide/) · [GitHub 仓库](https://github.com/Scott1743/climbing-guide)
 
+## 摆点求解实验室
+
+[打开 Beta Lab](https://scott1743.github.io/climbing-guide/route-lab.html)。支持拖放最多24个手点、脚点或通用点，指定四个起步接触和双手终点，设置墙面尺寸、身高与臂展。搜索返回最多3条候选顺序；可逐步播放、下载当前姿势或完整SVG分镜、导入导出点位JSON、撤销修改。点位仅保存在当前浏览器；搜索在本机Web Worker中运行。
+
+**候选不代表真实最佳解法。** 当前是近垂直墙的二维接触/伸展模型，不计算岩点朝向、摩擦、抓握力、墙角、关节负荷或三维转髋。每次只换一个接触；搜索有状态和时间预算，无法证明无解。请将结果作为地面讨论动作的草案。
+
+求解器验证：`node route-solver.test.cjs`。测试覆盖接触连续性、移动前后的公共可达姿势、用途约束、终点匹配、身体尺寸和无效输入。
+
 ## 内容
 
 - **3 个力学互动图**：身体靠近支撑、转髋后的肩部位置、自由腿与平衡。支持拖动、播放和分步查看；每图注明简化条件。
@@ -45,6 +53,10 @@ content.js       八周课程与补充资料
 reasons.js       动作因果解释与理解题内容
 animations.js    动作动画和 SVG 分镜
 mechanics.js     三个力学互动图
+route-lab.html/css/js  摆点求解界面与点位编辑
+route-solver.js  有预算的二维几何候选搜索
+route-render.js  墙面、姿势与SVG分镜生成
+solver-worker.js  后台搜索入口
 LICENSE         原创部分的 MIT 许可
 THIRD_PARTY_NOTICES.md  原视频和参考资料说明
 ```
