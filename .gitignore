@@ -1,0 +1,39 @@
+# Local tools, temporary exports, and operating-system files
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+*.zip
+node_modules/
+.venv/
+venv/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Original-media downloads and processing artifacts are not part of this repo
+work/
+source/
+media/
+transcript.js
+assets/poster.jpg
+assets/week-*.jpg
+assets/tutorial-preview.jpg
+*.mp4
+*.m4a
+*.m4s
+*.mp3
+*.wav
+*.srt
+*.vtt
+
+# Editor and synchronization copies
+app 2.js
+.idea/
+.vscode/
