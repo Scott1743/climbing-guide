@@ -3,3 +3,5 @@
 .mobile-preview{display:none}.mobile-preview svg{width:100%;height:auto;display:block}@media(max-width:760px){.mobile-preview{display:block;background:#f5f2f8;border:1px solid var(--line);margin:12px 0}.mobile-preview svg{max-height:470px}}
 
 @media(max-width:760px){#result-content{display:flex;flex-direction:column}#route-options{order:0}#route-overview{order:1}.step-heading{order:2;margin-top:5px;padding-top:10px}.mobile-preview{order:3}.playback-tools{order:4}.step-progress{order:5}.step-reason{order:6}.contact-summary{order:7}.export-row{order:8}.steps-detail{order:9}#result-content>.lab-help:last-child{order:10}}
+
+.scale-summary{padding:8px 10px;background:#f3edf8;border-left:3px solid #b88add;color:#493e55}.solver-status{white-space:pre-line}#empty-traverse{font-size:12px;margin-top:8px}

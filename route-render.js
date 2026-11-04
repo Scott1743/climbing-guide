@@ -187,9 +187,31 @@
     var a = project(from, view), b = project(to, view), id = 'cg-move-' + (++serial);
     return '<defs><marker id="' + id + '" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 7 3.5 0 7Z" fill="' + C.magenta + '"/></marker></defs><path d="M' + n(a.x) + ' ' + n(a.y) + 'L' + n(b.x) + ' ' + n(b.y) + '" fill="none" stroke="' + C.magenta + '" stroke-width="2.5" stroke-dasharray="5 6" opacity=".8" marker-end="url(#' + id + ')"/><circle cx="' + n(b.x) + '" cy="' + n(b.y) + '" r="28" fill="none" stroke="' + C.magenta + '" stroke-width="2" stroke-dasharray="4 4"/>';
   }
+  function startDiagnostic(input, view, diagnostic) {
+    var pair = diagnostic && diagnostic.pair;
+    if (!pair || !Array.isArray(pair.ids) || pair.ids.length !== 2 || !Number.isFinite(pair.distance) || pair.distance < 0) return '';
+    var byId = index(input), first = byId[String(pair.ids[0])], second = byId[String(pair.ids[1])];
+    if (!first || !second || ![first.x, first.y, second.x, second.y].every(Number.isFinite)) return '';
+    var a = project(first, view), b = project(second, view), wall = view.wall, midpoint = pointMix(a, b, .5);
+    var x = clamp(midpoint.x, wall.x + 104, wall.x + wall.width - 104), y = clamp(midpoint.y - 14, wall.y + 35, wall.y + wall.height - 18);
+    var line = 'M' + n(a.x) + ' ' + n(a.y) + 'L' + n(b.x) + ' ' + n(b.y);
+    var out = '<g class="route-start-diagnostic" pointer-events="none" aria-label="' + esc('起步接触点之间的距离 ' + n(pair.distance) + ' 米；此数值不是人体极限') + '">' +
+      '<path d="' + line + '" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + C.magenta + '" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="8 6"/>';
+    [a, b].forEach(function (point) {
+      out += '<circle cx="' + n(point.x) + '" cy="' + n(point.y) + '" r="31" fill="none" stroke="#fff" stroke-width="5" opacity=".85"/>' +
+        '<circle cx="' + n(point.x) + '" cy="' + n(point.y) + '" r="31" fill="none" stroke="' + C.magenta + '" stroke-width="2.5" stroke-dasharray="6 4"/>';
+    });
+    out += label(x, y, '起步跨度 ' + n(pair.distance) + ' m', { anchor: 'middle', size: 15, color: C.magenta, fill: '#fff7fc', bold: true });
+    return out + '</g>';
+  }
   function wallSvg(input, options) {
-    var opts = options || {}, view = viewport(input);
-    return shell(view, '摆放岩点', '二维岩壁编辑图。横轴是距左边的距离，纵轴是距地面的高度；单位米。拖动或选择岩点设置用途及起终点。', grid(input, view, opts) + holds(input, view, opts), ' data-editor-wall="true"', 'group');
+    var opts = options || {}, view = viewport(input), diagnostic = opts.diagnostic;
+    var checkingStart = diagnostic && diagnostic.kind === 'start-unreachable', gridOptions = opts;
+    if (checkingStart) {
+      gridOptions = Object.assign({}, opts, { heading: '起步检查 · 尚未搜索横移' });
+    }
+    return shell(view, '摆放岩点', '二维岩壁编辑图。横轴是距左边的距离，纵轴是距地面的高度；单位米。拖动或选择岩点设置用途及起终点。', grid(input, view, gridOptions) + (checkingStart ? startDiagnostic(input, view, diagnostic) : '') + holds(input, view, opts), ' data-editor-wall="true"', 'group');
   }
   function poseSvg(input, state, options) {
     var opts = options || {}, view = viewport(input), frame = frameAt(input, state, opts);

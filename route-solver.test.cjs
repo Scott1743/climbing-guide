@@ -105,4 +105,87 @@ assert.equal(done.status, 'ok');
 assert.equal(done.routes[0].moves.length, 0);
 assert.equal(done.routes[0].states.length, 1);
 
-console.log(`PASS: ${result.routes.length} complete routes; geometry/type/contact invariants; transition reach; size sensitivity; unreachable and invalid inputs.`);
+function checkRouteResult(solved, input) {
+  assert.equal(solved.status, 'ok');
+  assert(solved.routes.length > 0);
+  for (const route of solved.routes) {
+    for (const state of route.states) checkReach(state.pose, state.contacts, input);
+    for (let i = 0; i < route.moves.length; i++) {
+      const move = route.moves[i], before = route.states[i], after = route.states[i + 1];
+      assert.deepEqual(LIMBS.filter(l => before.contacts[l] !== after.contacts[l]), [move.limb]);
+      checkReach(move.movePose, before.contacts, input);
+      checkReach(move.movePose, after.contacts, input);
+    }
+    assert.equal(route.states.at(-1).contacts.lh, input.finish);
+    assert.equal(route.states.at(-1).contacts.rh, input.finish);
+  }
+}
+
+const rightTraverse = Solver.traverseExample();
+const freshTraverse = Solver.traverseExample();
+rightTraverse.holds[0].x += .01;
+assert.equal(freshTraverse.holds[0].x, .5, 'example callers must receive independent layouts');
+const rightResult = Solver.solve(freshTraverse);
+checkRouteResult(rightResult, freshTraverse);
+const leftTraverse = Solver.traverseExample();
+leftTraverse.holds.forEach(p => { p.x = leftTraverse.width - p.x; });
+leftTraverse.starts = { lh: 'H2', rh: 'H1', lf: 'F2', rf: 'F1' };
+const leftResult = Solver.solve(leftTraverse);
+checkRouteResult(leftResult, leftTraverse);
+assert.equal(leftResult.routes[0].moves.length, rightResult.routes[0].moves.length, 'mirrored traverses should not favor an upward/rightward direction');
+for (const [layout, solved] of [[freshTraverse, rightResult], [leftTraverse, leftResult]]) {
+  const points = new Map(layout.holds.map(p => [p.id, p]));
+  assert(solved.routes[0].moves.every(m => points.get(m.from).y === points.get(m.to).y), 'fixture must be pure sideways motion');
+}
+
+// The only intermediate handhold is 45 cm LOWER than the start. The finish
+// is back at the original height and too far for a direct hand transition.
+// This exercises a necessary downward setup move, not merely a lower finish.
+const dipTraverse = {
+  width: 3, height: 3, bodyHeight: 1.7, armSpan: 1.7,
+  holds: [
+    { id: 'A', x: .55, y: 1.9, type: 'hand' },
+    { id: 'B', x: 1.4, y: 1.45, type: 'hand' },
+    { id: 'C', x: 2.2, y: 1.9, type: 'hand' },
+    ...[.4, .8, 1.4, 1.9].map((x, i) => ({ id: `F${i}`, x, y: .7, type: 'foot' }))
+  ],
+  starts: { lh: 'A', rh: 'A', lf: 'F0', rf: 'F1' }, finish: 'C'
+};
+const dipResult = Solver.solve(dipTraverse);
+checkRouteResult(dipResult, dipTraverse);
+for (const route of dipResult.routes) assert(route.moves.some(m => hand(m.limb) && m.from === 'A' && m.to === 'B'));
+
+const screenshotLayout = {
+  width: 6, height: 4, bodyHeight: 1.7, armSpan: 1.7,
+  holds: [['H1', .55, 2.92], ['H6', .38, 1.25], ['H2', 1.8, 1.4], ['H3', 2.95, 2.72], ['H4', 4.3, 1.78], ['H5', 5.05, 3.42]]
+    .map(([id, x, y]) => ({ id, x, y, type: 'both' })),
+  starts: { lh: 'H1', rh: 'H1', lf: 'H6', rf: 'H2' }, finish: 'H5'
+};
+const diagnosticResult = Solver.solve(screenshotLayout);
+assert.equal(diagnosticResult.status, 'invalid');
+assert.equal(diagnosticResult.stats.expanded, 0, 'the start error happens before route search');
+assert.equal(diagnosticResult.diagnostic.kind, 'start-unreachable');
+assert.equal(diagnosticResult.diagnostic.searchStarted, false);
+assert.deepEqual(diagnosticResult.diagnostic.pair.limbs, ['rh', 'rf']);
+assert.deepEqual(diagnosticResult.diagnostic.pair.ids, ['H1', 'H2']);
+assert(Math.abs(diagnosticResult.diagnostic.pair.distance - Math.hypot(1.8 - .55, 1.4 - 2.92)) < 1e-10);
+for (const lean of [0, -.136, .136]) {
+  const shoulderY = Math.sqrt(.476 ** 2 - lean ** 2);
+  const handDisk = { x: .55 - lean - .17, y: 2.92 - shoulderY };
+  const footDisk = { x: 1.8 - .1105, y: 1.4 };
+  assert(Math.hypot(handDisk.x - footDisk.x, handDisk.y - footDisk.y) > .68 + .816, 'reported pair must prove disjoint reach disks for every tested torso pose');
+}
+assert.equal(diagnosticResult.message.split('\n').length, 3);
+assert(diagnosticResult.message.includes('尚未搜索换点'));
+assert(!diagnosticResult.message.includes('16.6'), 'technical angles belong in diagnostic metadata, not beginner error copy');
+
+const noPairProof = {
+  width: 3, height: 3, bodyHeight: 1.7, armSpan: 1.7,
+  holds: [{ id: 'A', x: 1, y: 1, type: 'both' }, { id: 'B', x: 1.6, y: 1.1, type: 'both' }, { id: 'C', x: 1.5, y: .4, type: 'foot' }],
+  starts: { lh: 'A', rh: 'B', lf: 'A', rf: 'C' }, finish: 'B'
+};
+assert.equal(Solver.solve(noPairProof).diagnostic.pair, null, 'do not invent a pairwise distance explanation when none was proved');
+
+const allPurposeExample = copy(example); allPurposeExample.holds.forEach(p => { p.type = 'both'; });
+checkRouteResult(Solver.solve(allPurposeExample), allPurposeExample);
+console.log(`PASS: ${result.routes.length} complete routes; geometry/type/contact invariants; transition reach; size sensitivity; unreachable/invalid inputs; left/right traverse; required downward setup; evidence-based start diagnostic.`);

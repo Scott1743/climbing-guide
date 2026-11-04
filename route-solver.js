@@ -67,6 +67,41 @@
     return { input, dim: dimensions(input), map: new Map(input.holds.map(p => [p.id, p])), cache: new Map() };
   }
 
+  function startDiagnostic(contacts, ctx) {
+    const { input, dim, map } = ctx, H = input.bodyHeight;
+    const diagnostic = {
+      kind: 'start-unreachable', searchStarted: false,
+      width: input.width, height: input.height,
+      bodyHeight: H, armSpan: input.armSpan,
+      maxTorsoLeanDegrees: Math.asin(0.08 / 0.28) * 180 / Math.PI,
+      checkedTorsoPoses: 3, pair: null
+    };
+    // A pair is reported only when its two reach disks are disjoint in EVERY
+    // torso pose that this model checks. Actual hold distance is descriptive;
+    // it is not itself the proof, nor a claim about a real climber's ability.
+    let largestGap = 0;
+    for (let i = 0; i < LIMBS.length; i++) for (let j = i + 1; j < LIMBS.length; j++) {
+      const a = LIMBS[i], b = LIMBS[j], pa = map.get(contacts[a]), pb = map.get(contacts[b]);
+      const radiusSum = (hand(a) ? dim.arm : dim.leg) + (hand(b) ? dim.arm : dim.leg);
+      const distances = [0, -0.08 * H, 0.08 * H].map(lean => {
+        const torsoY = Math.sqrt(dim.torso ** 2 - lean ** 2);
+        const disk = (l, p) => ({
+          x: p.x - (hand(l) ? lean + side(l) * dim.shoulderWidth / 2 : side(l) * dim.hipWidth / 2),
+          y: p.y - (hand(l) ? torsoY : 0)
+        });
+        return dist(disk(a, pa), disk(b, pb));
+      });
+      const gap = Math.min(...distances) - radiusSum;
+      if (gap > EPS && gap > largestGap) {
+        largestGap = gap;
+        diagnostic.pair = { limbs: [a, b], ids: [pa.id, pb.id], distance: dist(pa, pb),
+          minHipDiskDistance: Math.min(...distances), combinedReach: radiusSum, gap,
+          proof: 'reach-disks-disjoint-in-all-checked-torso-poses' };
+      }
+    }
+    return diagnostic;
+  }
+
   // All reach disks are expressed in hip-center coordinates. A candidate at a
   // disk intersection, disk center or rectangle boundary proves feasibility.
   // This is a conservative 2D stance model, not a contact-force solution.
@@ -170,7 +205,14 @@
     if (!check.valid) return finishResult('invalid', check.errors.join(' '));
     const ctx = context(input), { map, dim } = ctx, H = input.bodyHeight;
     const start = { ...input.starts }, startPose = findPose(start, ctx);
-    if (!startPose) return finishResult('invalid', '按当前身高、臂展和点位，起步姿势超出这个二维模型的可达范围。请先把四个起点靠近一些，或核对墙面尺寸。');
+    if (!startPose) {
+      const diagnostic = startDiagnostic(start, ctx), p = diagnostic.pair;
+      const scale = `墙面宽 ${input.width} 米、高 ${input.height} 米；身高 ${Math.round(H * 100)} 厘米、臂展 ${Math.round(input.armSpan * 100)} 厘米。`;
+      const detail = p
+        ? `${NAMES[p.limbs[0]]} ${p.ids[0]} 与${NAMES[p.limbs[1]]} ${p.ids[1]} 的岩点直线距离约 ${p.distance.toFixed(2)} 米；模型检查的姿势无法同时接触这两点。`
+        : '当前四个起点没有找到共同可行的姿态；没有足够证据把问题归因于某一对岩点。';
+      return { ...finishResult('invalid', `起步姿势未通过检查，尚未搜索换点。\n${scale}\n${detail}模型只表示直立和小幅侧倾，不能据此判断真人一定做不到。先核对实际比例与起点。`), diagnostic };
+    }
     const target = map.get(input.finish);
     const h = c => {
       const hands = [map.get(c.lh), map.get(c.rh)], feet = [map.get(c.lf), map.get(c.rf)];
@@ -205,10 +247,12 @@
       if (node.depth >= stats.maxSteps) { exhausted = true; continue; }
       for (const limb of LIMBS) {
         const from = map.get(node.contacts[limb]);
+        // Keep all directions, including horizontal travel and downward setup
+        // moves. Two endpoints can share a reach disk only within 2 limb lengths;
+        // the full common-pose test below still decides actual feasibility.
         const candidates = input.holds.filter(p => p.id !== from.id && allowed(p, limb) &&
-          dist(p, from) <= (hand(limb) ? dim.arm : dim.leg) * 1.85 && p.y >= from.y - 0.22 * H)
-          .sort((a, b) => ((b.y - from.y) - 0.30 * Math.abs(b.x - from.x)) - ((a.y - from.y) - 0.30 * Math.abs(a.x - from.x)))
-          .slice(0, 9);
+          dist(p, from) <= (hand(limb) ? dim.arm : dim.leg) * 2 + EPS)
+          .sort((a, b) => dist(a, target) - dist(b, target) || dist(a, from) - dist(b, from));
         if (hand(limb) && node.contacts[limb] === input.finish) continue;
         for (const to of candidates) {
           const contacts = { ...node.contacts, [limb]: to.id }, stateKey = key(contacts);
@@ -243,5 +287,16 @@
     return finishResult('no-route', '这个简化模型没有找到连接到双手终点的方案。检查是否缺少中间点、脚点或墙面尺度；它不涵盖动态跳跃、摩擦和三维动作，不能据此判定真实线路不可攀。');
   }
 
-  return Object.freeze({ solve, validate, poseFor, dimensions });
+  function traverseExample() {
+    return {
+      width: 3, height: 3, bodyHeight: 1.7, armSpan: 1.7,
+      holds: [
+        ...[0.5, 0.9, 1.3, 1.7, 2.1, 2.5].map((x, i) => ({ id: `H${i + 1}`, x, y: 1.5, type: 'hand' })),
+        ...[0.4, 0.8, 1.2, 1.6, 2, 2.4].map((x, i) => ({ id: `F${i + 1}`, x, y: 0.4, type: 'foot' }))
+      ],
+      starts: { lh: 'H1', rh: 'H2', lf: 'F1', rf: 'F2' }, finish: 'H6'
+    };
+  }
+
+  return Object.freeze({ solve, validate, poseFor, dimensions, traverseExample });
 });
