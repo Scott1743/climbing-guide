@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Climbing Guide — 把攀岩动作看明白</title>
+  <desc id="desc">紫黑白配色的攀岩教学网站分享封面，右侧是一位直臂支撑、双脚踩点的原创关节人形。</desc>
+  <defs>
+    <pattern id="wallDots" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="1.5" fill="#d9cce7"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#18131f"/>
+  <rect x="0" y="0" width="1200" height="8" fill="#7928ca"/>
+  <g font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+    <text x="64" y="84" fill="#ffffff" font-size="31" font-weight="800" letter-spacing="-.6">Climbing Guide</text>
+    <text x="65" y="116" fill="#bdaacc" font-size="12" font-weight="600" letter-spacing="3">TECHNIQUE / MOVEMENT / PRACTICE</text>
+    <text x="61" y="235" fill="#ffffff" font-size="68" font-weight="800" letter-spacing="-2">把攀岩动作</text>
+    <text x="61" y="318" fill="#c698f0" font-size="68" font-weight="800" letter-spacing="-2">看明白。</text>
+    <text x="65" y="376" fill="#eee5f6" font-size="24" font-weight="500">直臂 · 旗式 · 挂脚 · 换脚 · Dyno</text>
+    <text x="65" y="418" fill="#bdaeC7" font-size="19">13 个动画场景，让技巧接起来用。</text>
+    <line x1="65" y1="460" x2="687" y2="460" stroke="#493552"/>
+    <g fill="#ffffff" font-size="14" font-weight="700" letter-spacing=".5">
+      <text x="65" y="501">BOULDERING</text>
+      <text x="238" y="501">MOVEMENT STUDY</text>
+      <text x="464" y="501">BETA LAB</text>
+    </g>
+    <line x1="210" y1="488" x2="210" y2="503" stroke="#8f4ac9"/>
+    <line x1="436" y1="488" x2="436" y2="503" stroke="#8f4ac9"/>
+    <text x="65" y="569" fill="#bdaacc" font-size="19" letter-spacing=".1">scott1743.github.io/climbing-guide</text>
+  </g>
+  <rect x="748" y="8" width="452" height="622" fill="#f4eef9"/>
+  <rect x="772" y="94" width="404" height="452" fill="url(#wallDots)"/>
+  <g font-family="PingFang SC, sans-serif">
+    <text x="790" y="61" fill="#7928ca" font-size="12" letter-spacing="2.4" font-weight="700">LOOK. MOVE. UNDERSTAND.</text>
+    <text x="790" y="586" fill="#665771" font-size="16">先踩稳，再出手。</text>
+  </g>
+  <!-- Original climbing holds: two hands and two footholds. -->
+  <g fill="#7928ca">
+    <path d="M851 171q7-17 24-17l16 7-3 15-29 7z"/>
+    <path d="M1064 192q13-15 26-9l15 12-6 15-28-5z"/>
+    <path d="M840 497l16-11 24 7-6 13h-32z"/>
+    <path d="M1044 494l19-10 24 7-3 16h-36z"/>
+  </g>
+  <g fill="#d5bee8">
+    <path d="M819 307l14-11 16 7-4 15-23 1z"/>
+    <path d="M1087 359l15-8 18 9-8 12-24-2z"/>
+    <path d="M931 120l14-8 19 7-5 12-22 1z"/>
+  </g>
+  <!-- Long support arm on the left; angled free-side shoulder and flexed legs. -->
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M938 293L907 235L875 173" stroke="#b895d6" stroke-width="20"/>
+    <path d="M984 293L1043 246L1083 197" stroke="#7928ca" stroke-width="20"/>
+    <path d="M943 377L884 420L859 493" stroke="#b895d6" stroke-width="24"/>
+    <path d="M980 377L1031 424L1064 492" stroke="#7928ca" stroke-width="24"/>
+  </g>
+  <path d="M938 289Q960 279 984 289L987 354Q983 378 960 386Q938 378 934 354Z" fill="#ffffff" stroke="#7928ca" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M937 357Q960 368 985 357L981 381Q960 390 941 381Z" fill="#7928ca"/>
+  <path d="M960 271V285" stroke="#7928ca" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="960" cy="249" r="25" fill="#ffffff" stroke="#7928ca" stroke-width="5"/>
+  <g fill="#ffffff" stroke="#7928ca" stroke-width="3">
+    <circle cx="938" cy="293" r="7"/><circle cx="984" cy="293" r="7"/>
+    <circle cx="907" cy="235" r="7"/><circle cx="1043" cy="246" r="7"/>
+    <circle cx="875" cy="173" r="6"/><circle cx="1083" cy="197" r="6"/>
+    <circle cx="943" cy="377" r="7"/><circle cx="980" cy="377" r="7"/>
+    <circle cx="884" cy="420" r="7"/><circle cx="1031" cy="424" r="7"/>
+  </g>
+  <path d="M859 487l-10 8 20 3M1062 487l-2 10 20-1" fill="none" stroke="#32194b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="960" cy="371" r="5" fill="#d16a24"/>
+</svg>

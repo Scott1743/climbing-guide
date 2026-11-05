@@ -14,7 +14,7 @@
 
 ## 内容
 
-- **动作串联页**：13 个场景，包含正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚、双手 dyno，以及“换脚 → 外旗 → 并手 → 出手”的连续演示。12 个可点选关节、实时接触状态、俯视与挂脚补图、暂停、逐步、进度拖动和变速。`movement-lab.html` 是不依赖外部资源的单文件，可以离线打开。
+- **动作串联页**：13 个场景，包含正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚、双手 dyno，以及“换脚 → 外旗 → 并手 → 出手”的连续演示。12 个可点选关节、实时接触状态、俯视与挂脚补图、暂停、逐步、进度拖动和变速。`movement-lab.html` 的核心动画是自包含的，可以离线打开；联网分享使用独立的增强脚本。
 - 动作串联采用固定肢体长度与固定接触点；准备和稳定阶段展示自然长臂，发力与转换阶段允许屈臂。页面显示图示肘角；回归检查运行 `node movement-lab.test.cjs`，覆盖直臂连续性、接触不滑动、镜像及 dyno 的接点顺序。
 - **3 个力学互动图**：身体靠近支撑、转髋后的肩部位置、自由腿与平衡。支持拖动、播放和分步查看；每图注明简化条件。
 - **10 种动作动画**：脚尖踩点、换脚、直臂、同侧手脚、Rock over、Layback、读线、落膝、外旗、背旗。
@@ -78,3 +78,15 @@ GitHub Pages 以 `index.html` 为入口，资源使用相对路径，支持部�
 本项目原创代码、自绘图解和原创补充讲解以 [MIT License](LICENSE) 发布。外部嵌入内容、引用资料及其商标不属于 MIT 授权范围，详见 [第三方内容说明](THIRD_PARTY_NOTICES.md)。项目不是原作者、B 站或任何攀岩品牌的官方产品，也不表示获得其背书。
 
 欢迎通过 Issue 或 Pull Request 提出动作解释、可访问性或显示问题。涉及动作原理的修订请提供可核验的参考资料；不要在贡献中加入未经授权的完整视频、字幕或截图。
+
+## 搜索与分享
+
+三个页面分别设置中文标题、描述、规范地址（canonical）、Open Graph / Twitter 分享预览和与实际内容一致的 JSON-LD。分享封面为原创 SVG 绘制的 1200 × 630 PNG。页脚支持系统分享或复制当前页面的规范链接。
+
+首页八周课程、原理、章节和来源已写入初始 HTML；动作页提供 13 场景的静态说明。修改 `content.js`、`reasons.js`、`app.js` 或场景说明后，运行 `node scripts/prerender.cjs` 更新静态内容，再运行现有回归检查。脚本重复执行不会重复追加内容。
+
+站点地图：[sitemap.xml](https://scott1743.github.io/climbing-guide/sitemap.xml)。可在 Google Search Console 或 Bing Webmaster Tools 验证 URL-prefix 属性 `https://scott1743.github.io/climbing-guide/` 后提交。已发布站点地图不等于已经收录，搜索排名与展现由搜索引擎决定。
+
+本项目部署在 GitHub Pages 的子路径，项目目录中的 `robots.txt` 不能作为域根规则生效，因此这里不放一个无效的控制文件。若将来配置 robots，需要在 `https://scott1743.github.io/robots.txt` 管理，并避免影响该域名的其他项目。
+
+实现参考：[Google SEO 基础](https://developers.google.com/search/docs/fundamentals/seo-starter-guide)、[站点地图](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap)、[JavaScript SEO](https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics)、[Open Graph](https://ogp.me/)。

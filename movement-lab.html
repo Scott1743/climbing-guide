@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#7928ca">
-<meta name="description" content="用十三个 SVG 关节动画场景，看懂正身、侧身、旗式、挂脚、并手、换脚和 dyno 怎样串联。可暂停、分步与慢放。">
-<title>动作串联 · Climbing Guide</title>
+<meta name="description" content="13 个可暂停、慢放的攀岩关节动画，演示正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚和 Dyno。观察直臂支撑、脚点与髋部怎样配合。">
+<title>攀岩动作动画：旗式、挂脚、换脚与 Dyno｜Movement Study</title>
 <style>
 :root{--ink:#20172c;--muted:#71677c;--purple:#7928ca;--deep:#542084;--pale:#f1e8fa;--line:#e7e0ed;--wall:#f8f6fb;--left:#ba9ad8;--right:#7928ca;--hip:#d16a24;--foot:#26765b;--paper:#fff}
 *{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.65}button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:default;opacity:.36}a{color:var(--deep);text-underline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b77ae9;outline-offset:4px}button{color:inherit}button svg{pointer-events:none}::selection{background:#dec5f3}h1,h2,h3,p{margin:0}.topbar{height:76px;background:#18131f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(28px,calc((100vw - 1280px)/2));gap:20px}.brand{color:#fff;text-decoration:none;font-size:18px;font-weight:800;line-height:1.25;letter-spacing:-.5px}.brand small{display:block;font-size:9px;font-weight:500;letter-spacing:2px;color:#c8b6d9;margin-top:5px}.toplinks{display:flex;gap:27px;align-items:center;font-size:13px}.toplinks a{color:#d9cfe3;text-decoration:none;white-space:nowrap}.toplinks a[aria-current]{color:#fff;position:relative}.toplinks a[aria-current]:after{content:"";position:absolute;height:3px;bottom:-25px;left:0;right:0;background:#b76aff}
@@ -22,7 +22,80 @@ main{max-width:1336px;margin:auto;padding:38px 28px 0}.intro{display:flex;align-
 @media(max-width:480px){.category-picker{gap:5px}.category-button{font-size:10px;padding:7px 8px;gap:5px;min-height:34px}.contact-status{padding:10px 10px;gap:5px;grid-template-columns:repeat(2,minmax(0,1fr))}.contact-chip{font-size:10px}.phase-button{font-size:11px}.view-toolbar{align-items:flex-start}.view-label{width:100%}.stage>svg{aspect-ratio:370/550;max-height:none}.intro p{font-size:12px}#inset{display:none}.inset-mobile:not([hidden]){display:flex;justify-content:center;padding:12px;background:#f8f6fb;border-top:1px solid var(--line)}}
 @media(max-width:740px){.topbar{height:auto;align-items:flex-start;flex-direction:column;padding:17px 20px;gap:12px}.toplinks{gap:14px;font-size:12px}.toplinks a[aria-current]:after{bottom:-6px}}
 @media(max-width:390px){.topbar{padding:16px 18px 13px}.toplinks{gap:17px;font-size:11px}}
+.scene-directory{margin-top:24px;padding:18px 20px;border:1px solid var(--line);border-radius:7px;font-size:13px}.scene-directory summary{cursor:pointer;font-weight:650;color:var(--deep)}.scene-directory>p{margin-top:12px;color:var(--muted)}.scene-directory-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 30px;margin-top:20px}.scene-directory h3{font-size:14px;margin-bottom:7px}.scene-directory p{color:var(--muted);line-height:1.8}.scene-order{margin-top:8px;font-size:11px}.page-share{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.page-share button{font:inherit;color:var(--deep);background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:4px}.page-share [role="status"]:empty{display:none}@media(max-width:600px){.scene-directory-grid{grid-template-columns:1fr}.bottom{flex-wrap:wrap}}
 </style>
+<link rel="canonical" href="https://scott1743.github.io/climbing-guide/movement-lab.html">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Climbing Guide">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="攀岩动作动画：旗式、挂脚、换脚与 Dyno｜Movement Study">
+<meta property="og:description" content="13 个可暂停、慢放的攀岩关节动画，演示正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚和 Dyno。观察直臂支撑、脚点与髋部怎样配合。">
+<meta property="og:url" content="https://scott1743.github.io/climbing-guide/movement-lab.html">
+<meta property="og:image" content="https://scott1743.github.io/climbing-guide/assets/share-cover.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Climbing Guide：把攀岩动作看明白，紫色关节人物展示长臂支撑">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="攀岩动作动画：旗式、挂脚、换脚与 Dyno｜Movement Study">
+<meta name="twitter:description" content="13 个可暂停、慢放的攀岩关节动画，演示正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚和 Dyno。观察直臂支撑、脚点与髋部怎样配合。">
+<meta name="twitter:image" content="https://scott1743.github.io/climbing-guide/assets/share-cover.png">
+<meta name="twitter:image:alt" content="Climbing Guide 攀岩动作图解与线路实验室">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://scott1743.github.io/climbing-guide/#website",
+      "url": "https://scott1743.github.io/climbing-guide/",
+      "name": "Climbing Guide",
+      "inLanguage": "zh-CN"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://scott1743.github.io/climbing-guide/movement-lab.html#webpage",
+      "url": "https://scott1743.github.io/climbing-guide/movement-lab.html",
+      "name": "攀岩动作动画：旗式、挂脚、换脚与 Dyno｜Movement Study",
+      "description": "13 个可暂停、慢放的攀岩关节动画，演示正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚和 Dyno。观察直臂支撑、脚点与髋部怎样配合。",
+      "inLanguage": "zh-CN",
+      "isPartOf": {
+        "@id": "https://scott1743.github.io/climbing-guide/#website"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://scott1743.github.io/climbing-guide/assets/share-cover.png",
+        "width": 1200,
+        "height": 630
+      },
+      "mainEntity": {
+        "@id": "https://scott1743.github.io/climbing-guide/movement-lab.html#learning"
+      }
+    },
+    {
+      "@type": "LearningResource",
+      "@id": "https://scott1743.github.io/climbing-guide/movement-lab.html#learning",
+      "url": "https://scott1743.github.io/climbing-guide/movement-lab.html",
+      "name": "攀岩动作动画：旗式、挂脚、换脚与 Dyno｜Movement Study",
+      "description": "13 个可暂停、慢放的攀岩关节动画，演示正身、侧身、外旗、背旗、脚跟勾、脚尖勾、并手、换脚和 Dyno。观察直臂支撑、脚点与髋部怎样配合。",
+      "inLanguage": "zh-CN",
+      "educationalLevel": "Beginner",
+      "isAccessibleForFree": true,
+      "learningResourceType": "互动图解",
+      "teaches": [
+        "正身与侧身",
+        "外旗与背旗",
+        "脚跟勾与脚尖勾",
+        "换脚与并手",
+        "Dyno 的动作顺序"
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <header class="topbar"><a class="brand" href="index.html">Climbing Guide<small>TECHNIQUE / MOVEMENT</small></a><nav class="toplinks" aria-label="页面导航"><a href="index.html">BOULDERING</a><a href="movement-lab.html" aria-current="page">MOVEMENT STUDY</a><a href="route-lab.html">BETA LAB</a></nav></header>
@@ -49,8 +122,21 @@ main{max-width:1336px;margin:auto;padding:38px 28px 0}.intro{display:flex;align-
 </aside>
 </div>
 <p class="reading-note"><strong>怎么读：</strong>双环表示目标，绿色圈表示踩点，橙色圈表示勾住；虚线是路径。动画下方实时显示接触状态与图示肘角。准备和稳定时展开支撑臂，发力与转换时允许屈臂；直臂不等于锁死肘或完全放松肩。正身与侧身配俯视图，挂脚配接触放大图；dyno 会明确展示四点离壁与双手接点。</p>
+<!-- scene-directory --><details class="scene-directory"><summary>13 个攀岩场景：什么时候用，怎样接起来</summary><p>先读场景条件，再点名称观看动画。左右方向只是一个条件，还要结合脚点、身体位置和下一次出手。</p><div class="scene-directory-grid"><article><h3><a href="#right" data-open-scene="right">向右上够点</a></h3><p>目标在右上，右边也有一个更合适的脚点。先换脚的位置，再把髋移过去，最后出右手。</p><p class="scene-order">看好点位 → 踩脚准备 → 移动髋部 → 蹬腿伸手</p></article>
+<article><h3><a href="#left" data-open-scene="left">向左上够点</a></h3><p>这组点位与第一个场景左右对称。先放好左脚，再把髋移向左边，最后出左手。</p><p class="scene-order">看好点位 → 踩脚准备 → 移动髋部 → 蹬腿伸手</p></article>
+<article><h3><a href="#high" data-open-scene="high">手点有点高</a></h3><p>目标主要在上方。先找到较高的脚点，再把身体移到能推起的位置；站起时，另一只脚可以离开低脚点。</p><p class="scene-order">看好点位 → 踩脚准备 → 移动髋部 → 蹬腿伸手</p></article>
+<article><h3><a href="#balance" data-open-scene="balance">外旗</a></h3><p>右脚有可用支撑，左脚没有合适的新点。左腿向左侧伸出，配合髋的位置调整，再尝试移动右手。</p><p class="scene-order">看好点位 → 踩脚准备 → 移动髋部 → 蹬腿伸手</p></article>
+<article><h3><a href="#swap" data-open-scene="swap">换脚</a></h3><p>中间是一个足够大的脚点。先把左脚换过去接替支撑，腾出右脚去踩右侧点，然后再移动身体。</p><p class="scene-order">看好点位 → 踩脚准备 → 移动髋部 → 蹬腿伸手</p></article>
+<article><h3><a href="#square" data-open-scene="square">正身蹬起</a></h3><p>两侧都有合适的脚点，目标主要在上方。胸与髋大致正对墙，先站起，再移动右手；不必每一步都强行转髋。</p><p class="scene-order">看点位 → 踩稳两脚 → 正身站起 → 右手接点</p></article>
+<article><h3><a href="#turn" data-open-scene="turn">侧身转髋</a></h3><p>脚点允许身体转动时，可以让一侧髋靠近墙，改变肩的位置和出手方向。主体是沿墙投影，转动请同时看左上俯视图。</p><p class="scene-order">起步 → 右脚找位 → 转右髋 → 右手出手</p></article>
+<article><h3><a href="#backflag" data-open-scene="backflag">背旗</a></h3><p>左手与左脚保留连接，右手准备向右出。右腿从左腿后方穿过，帮助把身体安排到支撑附近；和外旗的走向不同。</p><p class="scene-order">辨认支撑 → 右腿后穿 → 髋找位置 → 右手出手</p></article>
+<article><h3><a href="#heel" data-open-scene="heel">脚跟勾</a></h3><p>左侧凸点提供脚跟接触面。抬起左脚，脚跟放到点上并主动拉住，让髋靠近左侧，再出左手；它不是普通的脚尖踩点。</p><p class="scene-order">找可勾的点 → 放好脚跟 → 主动勾拉 → 左手出手</p></article>
+<article><h3><a href="#toe" data-open-scene="toe">脚尖勾</a></h3><p>在有合适下缘的点或体积上，用脚背靠近脚尖的胶面勾住。左脚形成拉的连接，配合右脚踩点，让右手有机会移动。</p><p class="scene-order">看下缘 → 放入脚尖 → 保持勾拉 → 右手接点</p></article>
+<article><h3><a href="#match" data-open-scene="match">并手</a></h3><p>右边的大手点有足够位置容纳两手。左手跟到右手所在点，再让右手继续往右出；并手是在重新分配下一次出手。</p><p class="scene-order">读点位 → 安排脚 → 身体靠近 → 左手并入 → 右手再出</p></article>
+<article><h3><a href="#dyno" data-open-scene="dyno">Dyno 动态跳</a></h3><p>双手 dyno 的手臂姿态会改变：下沉准备时展开，蹬起时屈曲配合，远点接点时伸长，再经过屈臂缓冲回到长臂。肩始终保持主动控制。</p><p class="scene-order">预备 → 展开手臂 → 蹬起 → 腾空 → 长臂接点 → 屈臂缓冲 → 恢复长臂</p></article>
+<article><h3><a href="#combo" data-open-scene="combo">连续动作串联</a></h3><p>同一组连续点位：先换脚让右脚去右侧，再用外旗辅助左手并到大点，最后继续出右手。每个技巧都在为下一次移动服务。</p><p class="scene-order">读线 → 换脚 → 右脚踩点 → 外旗 → 移髋 → 并手 → 再出手</p></article></div></details><!-- /scene-directory -->
 <details class="tech-explainer"><summary>图里的几个词，分别在解决什么？</summary><p><b>正身：</b>胸与髋大致正对墙，两腿可以参与推起。<b>侧身：</b>一侧髋转向墙，改变肩与目标的位置。<b>旗式：</b>自由腿调整身体分布，帮助处理失衡；它不一定要踩点。<b>脚跟勾 / 脚尖勾：</b>用脚跟或脚背前端与岩点形成拉的连接，和普通脚尖踩点不同。<b>并手：</b>两手先后占据同一大手点，重新安排下一只出手。<b>换脚：</b>一只脚接替另一只脚的位置。<b>Dyno：</b>借助蹬起和身体动量完成远距转移，本页展示四点离壁的一种。</p><p>动作说明参考：<a href="https://www.rei.com/learn/expert-advice/climbing-techniques.html" target="_blank" rel="noopener">REI 动作基础</a> · <a href="https://www.climbing.com/skills/how-to-heel-hook/" target="_blank" rel="noopener">脚跟勾教学</a> · <a href="https://www.climbing.com/skills/rock-climbing-technique-foot-toe-hooks-tips/" target="_blank" rel="noopener">脚尖勾教学</a>。动画为原创简化示意。</p></details>
-<footer class="bottom"><p>动作是条件明确的教学示例，不能按左右方向硬套。主体采用二维关节模型，俯视与挂脚补图展示额外关系；不计算摩擦、抓握或关节负荷，髋标记不是精确重心。动态场景经过分解慢放，不代表真实的飞行速度、重力轨迹或抓点时机。</p><a href="https://www.rei.com/learn/expert-advice/climbing-techniques.html" target="_blank" rel="noopener">动作原理参考 ↗</a></footer>
+<footer class="bottom"><p>动作是条件明确的教学示例，不能按左右方向硬套。主体采用二维关节模型，俯视与挂脚补图展示额外关系；不计算摩擦、抓握或关节负荷，髋标记不是精确重心。动态场景经过分解慢放，不代表真实的飞行速度、重力轨迹或抓点时机。</p><a href="https://www.rei.com/learn/expert-advice/climbing-techniques.html" target="_blank" rel="noopener">动作原理参考 ↗</a><div class="page-share"><button type="button" data-share-page hidden>分享页面 ↗</button><span role="status" aria-live="polite"></span><a href="sitemap.xml">站点地图</a></div></footer>
 </main>
 <script>
 (() => {
@@ -247,8 +333,11 @@ $('play').addEventListener('click',play);$('prev').addEventListener('click',()=>
 $('joint-nodes').addEventListener('click',e=>{const b=e.target.closest('[data-joint]');if(b)selectJoint(b.dataset.joint);});$('joint-nodes').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const b=e.target.closest('[data-joint]');if(b){e.preventDefault();selectJoint(b.dataset.joint);}}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
 createJoints();const insetGroup=document.createElementNS(svgNS,'g');insetGroup.id='inset';$('wall').appendChild(insetGroup);const smallScreen=window.matchMedia('(max-width:480px)');function syncStageView(){$('wall').setAttribute('viewBox',smallScreen.matches?'200 0 370 550':'0 0 740 550');}smallScreen.addEventListener('change',syncStageView);syncStageView();const initialScene=scenes.findIndex(s=>s.id===location.hash.slice(1));selectScene(Math.max(0,initialScene));
+window.addEventListener('hashchange',()=>{const i=scenes.findIndex(s=>s.id===location.hash.slice(1));if(i>=0&&i!==selected)selectScene(i);});
+document.querySelectorAll('[data-open-scene]').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const i=scenes.findIndex(s=>s.id===link.dataset.openScene);if(i>=0){selectScene(i);document.querySelector('.workspace').scrollIntoView({behavior:'auto',block:'start'});}}));
 window.MovementLab={scenes,poseAt,geometry,dist,getState:()=>({scene:scenes[selected].id,progress:q,playing,activeJoint}),selectScene,setProgress};
 })();
 </script>
+<script src="share.js" defer></script>
 </body>
 </html>

@@ -2,10 +2,81 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Beta Lab · 摆点求解 | Climbing Guide</title>
-<meta name="description" content="摆放岩点、设置身高与起终点，探索二维攀岩候选动作，逐步播放并导出 SVG 分镜。">
+<title>攀岩线路动作规划器：摆点与 SVG 分镜｜Beta Lab</title>
+<meta name="description" content="在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。">
 <meta name="theme-color" content="#7928ca"><link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="route-lab.css?v=straight-arm-20261104">
+<link rel="canonical" href="https://scott1743.github.io/climbing-guide/route-lab.html">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Climbing Guide">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="攀岩线路动作规划器：摆点与 SVG 分镜｜Beta Lab">
+<meta property="og:description" content="在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。">
+<meta property="og:url" content="https://scott1743.github.io/climbing-guide/route-lab.html">
+<meta property="og:image" content="https://scott1743.github.io/climbing-guide/assets/share-cover.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Climbing Guide：把攀岩动作看明白，紫色关节人物展示长臂支撑">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="攀岩线路动作规划器：摆点与 SVG 分镜｜Beta Lab">
+<meta name="twitter:description" content="在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。">
+<meta name="twitter:image" content="https://scott1743.github.io/climbing-guide/assets/share-cover.png">
+<meta name="twitter:image:alt" content="Climbing Guide 攀岩动作图解与线路实验室">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://scott1743.github.io/climbing-guide/#website",
+      "url": "https://scott1743.github.io/climbing-guide/",
+      "name": "Climbing Guide",
+      "inLanguage": "zh-CN"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://scott1743.github.io/climbing-guide/route-lab.html#webpage",
+      "url": "https://scott1743.github.io/climbing-guide/route-lab.html",
+      "name": "攀岩线路动作规划器：摆点与 SVG 分镜｜Beta Lab",
+      "description": "在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。",
+      "inLanguage": "zh-CN",
+      "isPartOf": {
+        "@id": "https://scott1743.github.io/climbing-guide/#website"
+      },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://scott1743.github.io/climbing-guide/assets/share-cover.png",
+        "width": 1200,
+        "height": 630
+      },
+      "mainEntity": {
+        "@id": "https://scott1743.github.io/climbing-guide/route-lab.html#application"
+      }
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://scott1743.github.io/climbing-guide/route-lab.html#application",
+      "name": "Beta Lab 攀岩线路动作规划器",
+      "url": "https://scott1743.github.io/climbing-guide/route-lab.html",
+      "description": "在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。",
+      "inLanguage": "zh-CN",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "需要支持 JavaScript、SVG 和 Web Worker 的浏览器。",
+      "isAccessibleForFree": true,
+      "featureList": [
+        "岩点拖放与身体尺寸设置",
+        "二维候选动作顺序",
+        "分步播放与 SVG 分镜导出",
+        "点位 JSON 导入导出"
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body class="beta-lab">
 <header class="masthead"><a class="brand" href="index.html">Climbing Guide <span>TECHNIQUE / MECHANICS</span></a><nav aria-label="页面导航"><a href="index.html">BOULDERING</a><a href="movement-lab.html">MOVEMENT STUDY</a><a href="route-lab.html" aria-current="page">BETA LAB</a></nav></header>
@@ -32,6 +103,7 @@
 </div>
 <section id="model-notes" class="model-notes"><div><span class="lab-kicker">READ THE MODEL</span><h2>它能帮你想动作，<br>还不能替你判路线。</h2></div><div class="model-grid"><article><h3>它检查什么</h3><p>岩点距离、手脚类型、身高与臂展对应的简化伸展范围。搜索一次只改变一个接触，并尝试为换点前后找到共同的身体位置。</p></article><article><h3>它没有测量什么</h3><p>岩点形状与方向、墙面仰角、抓握力、摩擦、柔韧性、关节负荷和落区。转髋、落膝、旗式涉及三维关系，这一版不自动判定这些技术。</p></article><article><h3>怎样读候选排序</h3><p>排序考虑换点次数、支撑臂屈曲、腿部伸展和无效移动。姿势优先让支撑臂接近伸直，受点位限制时保留屈臂。它不等于最小肌肉用力，也不保证是全部可行解中的最优。</p></article><article><h3>没找到方案怎么办</h3><p>先检查标尺、四个起点和点的类型，再核对中间是否漏了脚点。搜索有时间与状态数量限制，“没找到”不代表人一定爬不了。</p></article></div></section>
 <p class="lab-privacy">点位与设置只保存在当前浏览器。计算在你的设备上完成，不上传照片或点位数据。</p>
-</main><footer>Climbing Guide <span>先理解，再尝试。</span><a href="index.html">返回教程 ↗</a></footer>
+</main><footer>Climbing Guide <span>先理解，再尝试。</span><a href="index.html">返回教程 ↗</a><div class="page-share"><button type="button" data-share-page hidden>分享页面 ↗</button><span role="status" aria-live="polite"></span><a href="sitemap.xml">站点地图</a></div></footer>
 <script src="route-solver.js?v=straight-arm-20261104"></script><script src="route-render.js?v=straight-arm-20261104"></script><script src="route-lab.js?v=straight-arm-20261104"></script>
+<script src="share.js" defer></script>
 </body></html>
