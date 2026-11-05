@@ -1,4 +1,4 @@
-/* Climbing Guide: original two-dimensional SVG route schematics. MIT. */
+/* Climbing Guide: original two-dimensional SVG route schematics. See LICENSE. */
 (function (root, factory) {
   'use strict';
   var api = factory();
@@ -64,9 +64,9 @@
     var start = opts.anchor === 'middle' ? x - width / 2 : opts.anchor === 'end' ? x - width : x - 6;
     return '<rect x="' + n(start) + '" y="' + n(y - font) + '" width="' + n(width) + '" height="' + (font + 7) + '" rx="4" fill="' + (opts.fill || '#fff') + '" fill-opacity=".96"/>' + text(x, y, value, opts);
   }
-  function shell(view, title, desc, content, extra, role) {
+  function shell(view, title, desc, content, extra, role, metadata) {
     var id = 'cg-route-' + (++serial);
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + view.viewBox + '" role="' + (role || 'img') + '" aria-labelledby="' + id + '-title ' + id + '-desc" class="route-wall-svg"' + (extra || '') + '><title id="' + id + '-title">' + esc(title) + '</title><desc id="' + id + '-desc">' + esc(desc) + '</desc><g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">' + content + '</g></svg>';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + view.viewBox + '" role="' + (role || 'img') + '" aria-labelledby="' + id + '-title ' + id + '-desc" class="route-wall-svg"' + (extra || '') + '><title id="' + id + '-title">' + esc(title) + '</title><desc id="' + id + '-desc">' + esc(desc) + '</desc>' + (metadata || '') + '<g font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">' + content + '</g></svg>';
   }
   function grid(input, view, opts) {
     opts = opts || {};
@@ -260,6 +260,9 @@
     }
     return shell(view, '摆放岩点', '二维岩壁编辑图。横轴是距左边的距离，纵轴是距地面的高度；单位米。拖动或选择岩点设置用途及起终点。', grid(input, view, gridOptions) + (checkingStart ? startDiagnostic(input, view, diagnostic) : '') + holds(input, view, opts), ' data-editor-wall="true"', 'group');
   }
+  function licenseMetadata() {
+    return '<metadata>\nRequired Notice: Copyright 2026 Scott1743 (https://github.com/Scott1743)\nPolyForm Noncommercial License 1.0.0: https://polyformproject.org/licenses/noncommercial/1.0.0\n</metadata>';
+  }
   function poseSvg(input, state, options) {
     var opts = options || {}, view = viewport(input), frame = frameAt(input, state, opts);
     var holdOpts = { showLabels: opts.showLabels !== false, showStarts: false, interactive: false, selectedId: opts.selectedId };
@@ -267,7 +270,7 @@
     var content = grid(input, view, { heading: heading, footnote: armFootnote(input, frame), photo: opts.photo });
     content += motion(input, view, opts) + holds(input, view, holdOpts) + person(input, frame, view, opts);
     content += label(view.wall.x + 12, view.wall.y + 25, frame.phase, { size: 14, color: C.purple, bold: true });
-    return shell(view, heading, '手脚位置对应岩点，浅紫为左侧，深紫为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content);
+    return shell(view, heading, '手脚位置对应岩点，浅紫为左侧，深紫为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content, null, null, opts.exported ? licenseMetadata() : '');
   }
   function wrap(value, max) {
     var chars = Array.from(String(value || '')), lines = [], line = '', width = 0;
@@ -292,8 +295,8 @@
       notes[i].slice(0, 6).forEach(function (line, j) { out += text(16, 40 + diagramHeight + 22 + j * 23, line + (j === 5 && notes[i].length > 6 ? '…' : ''), { size: 16 }); });
       out += '</g>';
     });
-    out += text(margin, height - 29, '原创教学示意 · MIT · https://scott1743.github.io/climbing-guide/', { size: 16, color: C.muted });
-    return shell({ viewBox: '0 0 ' + width + ' ' + n(height), width: width, height: height }, 'Climbing Guide 候选攀岩解法分镜', '包含起始姿态与每一步手脚移动后的状态。候选顺序不等于真实最佳解法或安全认证。', out, ' width="' + width + '" height="' + n(height) + '"');
+    out += text(margin, height - 29, '原创教学示意 · © Scott1743 · 商用请取得授权 · https://scott1743.github.io/climbing-guide/', { size: 16, color: C.muted });
+    return shell({ viewBox: '0 0 ' + width + ' ' + n(height), width: width, height: height }, 'Climbing Guide 候选攀岩解法分镜', '包含起始姿态与每一步手脚移动后的状态。候选顺序不等于真实最佳解法或安全认证。', out, ' width="' + width + '" height="' + n(height) + '"', null, licenseMetadata());
   }
   return { viewport: viewport, photoRect: photoRect, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, frameAt: frameAt };
 });

@@ -77,8 +77,15 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="project-credit.css">
 </head>
 <body class="beta-lab">
+<div class="project-bar">
+  <div class="project-bar-inner">
+    <a class="project-owner" href="https://github.com/Scott1743">GitHub · Scott 1743 <span>@Scott1743</span></a>
+    <a class="project-star" href="https://github.com/Scott1743/climbing-guide" target="_blank" rel="noopener" aria-label="在 GitHub 上为 Climbing Guide 加星（新窗口）"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.7 6.3.9-4.5 4.5 1 6.3L12 17.4l-5.6 3 1-6.3L3 9.6l6.2-.9L12 3Z"/></svg>Star on GitHub</a>
+  </div>
+</div>
 <header class="masthead"><a class="brand" href="index.html">Climbing Guide <span>TECHNIQUE / MECHANICS</span></a><nav aria-label="页面导航"><a href="index.html">BOULDERING</a><a href="movement-lab.html">MOVEMENT STUDY</a><a href="route-lab.html" aria-current="page">BETA LAB</a></nav></header>
 <main class="lab-main">
 <section class="lab-intro"><div><div class="eyebrow">BETA LAB / 二维动作实验室</div><h1>摆出岩点。<br><em>把动作连起来。</em></h1><p>画下你眼中的线路，看看手脚可以怎样换点。<br>拖放岩点 → 指定起终点 → 逐步播放 SVG。</p></div><aside><b>寻找候选解法</b><p>根据距离、身体尺寸与动作数量排序。二维点位无法反映岩点抓握方向、摩擦和墙角，因此这里给出的是动作草案，不能确认实际可爬、最省力或安全。</p><a href="#model-notes">了解计算条件 ↓</a></aside></section>
@@ -104,7 +111,12 @@
 </div>
 <section id="model-notes" class="model-notes"><div><span class="lab-kicker">READ THE MODEL</span><h2>它能帮你想动作，<br>还不能替你判路线。</h2></div><div class="model-grid"><article><h3>它检查什么</h3><p>岩点距离、手脚类型、身高与臂展对应的简化伸展范围。搜索一次只改变一个接触，并尝试为换点前后找到共同的身体位置。</p></article><article><h3>它没有测量什么</h3><p>岩点形状与方向、墙面仰角、抓握力、摩擦、柔韧性、关节负荷和落区。转髋、落膝、旗式涉及三维关系，这一版不自动判定这些技术。</p></article><article><h3>怎样读候选排序</h3><p>排序考虑换点次数、支撑臂屈曲、腿部伸展和无效移动。姿势优先让支撑臂接近伸直，受点位限制时保留屈臂。它不等于最小肌肉用力，也不保证是全部可行解中的最优。</p></article><article><h3>没找到方案怎么办</h3><p>先检查标尺、四个起点和点的类型，再核对中间是否漏了脚点。搜索有时间与状态数量限制，“没找到”不代表人一定爬不了。</p></article></div></section>
 <p class="lab-privacy">照片、点位与设置只保存在当前浏览器。照片只保留一张，新照片会替换旧照片；计算与图片处理都在你的设备上完成，不上传到 GitHub，也不占用网站托管存储。清除本站浏览器数据会一并清除本地照片。</p>
-</main><footer>Climbing Guide <span>先理解，再尝试。</span><a href="index.html">返回教程 ↗</a><div class="page-share"><button type="button" data-share-page hidden>分享页面 ↗</button><span role="status" aria-live="polite"></span><a href="sitemap.xml">站点地图</a></div></footer>
-<script src="route-solver.js?v=photo-20261105"></script><script src="route-render.js?v=photo-20261105"></script><script src="route-photo.js?v=photo-20261105"></script><script src="route-photo-ui.js?v=photo-20261105"></script><script src="route-lab.js?v=photo-20261105"></script>
+</main><footer class="project-footer">Climbing Guide <span>先理解，再尝试。</span><a href="index.html">返回教程 ↗</a><div class="page-share"><button type="button" data-share-page hidden>分享页面 ↗</button><span role="status" aria-live="polite"></span><a href="sitemap.xml">站点地图</a></div>
+<div class="project-license">
+  <p class="project-credit">© 2026 <a href="https://github.com/Scott1743">Scott 1743 · @Scott1743</a></p>
+  <p>原创内容按 <a href="LICENSE">PolyForm Noncommercial 1.0.0</a> 提供。超出该许可范围的商业使用，须事先<a href="mailto:512981271@qq.com?subject=Climbing%20Guide%20Commercial%20License">联系作者购买书面商用授权</a>。<a href="THIRD_PARTY_NOTICES.md">第三方内容</a>依各自权利条款。</p>
+</div>
+</footer>
+<script src="route-solver.js?v=photo-20261105"></script><script src="route-render.js?v=license-20261105"></script><script src="route-photo.js?v=license-20261105"></script><script src="route-photo-ui.js?v=photo-20261105"></script><script src="route-lab.js?v=license-20261105"></script>
 <script src="share.js" defer></script>
 </body></html>

@@ -1,4 +1,4 @@
-/* Climbing Guide: one local-only photo background. No network requests. MIT. */
+/* Climbing Guide: one local-only photo background. No network requests. See LICENSE. */
 (function (root, factory) {
   'use strict';
   var api = factory(root);

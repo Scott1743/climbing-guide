@@ -68,7 +68,8 @@ route-photo.js   单张照片本地处理、替换与 IndexedDB 缓存
 route-photo-ui.js / route-photo.css  拍照、裁切、拖动及拉伸控制
 route-photo.test.cjs  图片处理、保存失败与替换竞态检查
 solver-worker.js  后台搜索入口
-LICENSE         原创部分的 MIT 许可
+LICENSE         PolyForm Noncommercial 1.0.0 许可原文
+NOTICE          原创内容版权声明与适用范围
 THIRD_PARTY_NOTICES.md  原视频和参考资料说明
 ```
 
@@ -78,11 +79,15 @@ GitHub Pages 以 `index.html` 为入口，资源使用相对路径，支持部�
 
 此仓库发布教程代码、自绘 SVG 和补充讲解，并通过 B 站播放器引用原视频。**不包含下载的原片、真人片段、视频截图、中文译配音视频或完整逐字稿。**
 
-课程顺序参考 Sara Wade / Send Edition 的八周入门视频；动作原理说明结合原视频和文末列出的补充资料重新编写。第三方原视频及资料不因本项目开源而获得再发布许可。
+课程顺序参考 Sara Wade / Send Edition 的八周入门视频；动作原理说明结合原视频和文末列出的补充资料重新编写。第三方原视频及资料的再发布权由各自权利人决定。
 
 ## 许可与贡献
 
-本项目原创代码、自绘图解和原创补充讲解以 [MIT License](LICENSE) 发布。外部嵌入内容、引用资料及其商标不属于 MIT 授权范围，详见 [第三方内容说明](THIRD_PARTY_NOTICES.md)。项目不是原作者、B 站或任何攀岩品牌的官方产品，也不表示获得其背书。
+本项目的源代码可公开查阅。原创代码、自绘图解和原创补充讲解按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供；非商业使用及其他获准用途以许可原文为准。分发时请保留许可条款或其链接，以及 [版权声明](NOTICE)。
+
+**商用授权：** 如需将项目原创内容或代码用于公开许可未授权的商业用途（如收费产品或商业服务），请[邮件联系 Scott 1743（@Scott1743）购买书面商用授权](mailto:512981271@qq.com?subject=Climbing%20Guide%20Commercial%20License)。来信请说明用途、涉及的内容及使用范围。
+
+本项目的授权不涵盖第三方视频、嵌入内容、引用资料及商标，详见 [第三方内容说明](THIRD_PARTY_NOTICES.md)。项目与原作者、B 站及任何攀岩品牌无隶属关系。此前已按旧许可证发布的版本仍适用当时的许可。
 
 欢迎通过 Issue 或 Pull Request 提出动作解释、可访问性或显示问题。涉及动作原理的修订请提供可核验的参考资料；不要在贡献中加入未经授权的完整视频、字幕或截图。
 
