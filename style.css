@@ -38,6 +38,20 @@
 @media print{.learning-path,.clip-label,.clip-controls,.quiz-options{display:none}.mechanics-opening .lead,.mechanics-bottom>strong,.mechanics-bottom p{color:#000}.mechanics-bottom{background:#fff;border:1px solid #000}.principle,.reason-chain,.understanding-check{break-inside:avoid}.reason-chain{grid-template-columns:repeat(3,minmax(0,1fr))}.extra-move .reason-chain{grid-template-columns:1fr}.quiz-feedback:empty{display:none}}
 
 /* Public edition: source video stays on its original platform. */
-#player{width:100%;aspect-ratio:16/9;display:block;border:0;background:#121016}.source-clip-stage{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;width:100%;aspect-ratio:16/9;border:0;border-radius:0;background:linear-gradient(135deg,#17121f 40%,#3e1361);color:#fff;padding:24px}.source-clip-stage:hover{background:linear-gradient(135deg,#21152f 20%,#641e99);color:#fff}.source-clip-stage svg{width:60px;height:60px}.source-clip-stage strong{font-size:clamp(22px,3vw,38px);font-variant-numeric:tabular-nums;letter-spacing:-.04em}.source-clip-stage strong span{color:#d1aae9}.source-clip-stage>span{font-size:13px;color:#e8d5f6}.source-clip figcaption{padding:14px 16px}.source-clip-stage:focus-visible{outline:3px solid #ce91ff;outline-offset:-5px}footer{gap:16px;flex-wrap:wrap}@media print{iframe,.source-clip-stage{display:none}}
+#player{width:100%;aspect-ratio:16/9;display:block;border:0;background:#121016}footer{gap:16px;flex-wrap:wrap}@media print{iframe,.clip-links,.gif-state{display:none}}
 
 .page-share{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.page-share button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:4px}.page-share [role="status"]:empty{display:none}.page-share [role="status"]{display:inline;font-size:11px}
+
+/* Local GIF cards keep the reader in the current lesson. */
+.gif-stage{position:relative;display:block;width:100%;padding:0;border:0;border-radius:0;overflow:hidden;background:var(--black);color:#fff;cursor:pointer}
+.gif-stage:disabled{cursor:default}
+.gif-stage:hover{background:var(--black);color:#fff}
+.gif-stage img{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:0;object-fit:contain}
+.gif-state{display:block;padding:10px 14px;min-height:42px;background:var(--black);color:#fff;text-align:left;font-size:12px;line-height:1.8}
+.gif-stage:hover .gif-state{background:var(--accent-deep)}
+.gif-stage:focus-visible{outline:3px solid #ce91ff;outline-offset:-4px}
+.clip-links{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 18px;padding:11px 14px;background:var(--soft);font-size:12px;line-height:1.8}
+.clip-links a{color:var(--accent-deep);text-underline-offset:3px}
+.source-clip figcaption{padding:4px 14px 12px}
+.clip-credit{display:block;margin-top:6px;font-size:11px;color:var(--muted)}
+@media print{.gif-state,.clip-links{display:none}}

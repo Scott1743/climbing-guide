@@ -12,7 +12,7 @@ const context = {
   document: {querySelector(selector) {if (!elements.has(selector)) elements.set(selector, {}); return elements.get(selector);}}
 };
 vm.createContext(context);
-for (const file of ['content.js', 'reasons.js']) vm.runInContext(read(file), context, {filename:file});
+for (const file of ['content.js', 'reasons.js', 'assets/clips/manifest.js']) vm.runInContext(read(file), context, {filename:file});
 const app = read('app.js');
 const end = app.indexOf(" document.querySelectorAll('[data-animation]')");
 if (end < 0) throw new Error('The app rendering boundary changed; update this script.');
