@@ -146,12 +146,34 @@
     if (!arms.left || !arms.right) return '浅紫：左侧 · 深紫：右侧 · 髋点不是精确重心';
     return '左肘 ' + Math.round(arms.left.elbowDegrees) + '° · 右肘 ' + Math.round(arms.right.elbowDegrees) + '° · 180°表示图示伸直';
   }
-  function joint(a, b, length, side) {
+  function joint(a, b, length, side, isLeg) {
     var dx = b.x - a.x, dy = b.y - a.y, dist = Math.sqrt(dx * dx + dy * dy), half = length / 2;
     if (dist < .00001) return { x: a.x + side * half, y: a.y };
     var h = Math.sqrt(Math.max(0, half * half - dist * dist / 4)), mid = pointMix(a, b, .5), px = -dy / dist, py = dx / dist;
-    var sign = side * px >= 0 ? 1 : -1;
-    return { x: mid.x + sign * px * h, y: mid.y + sign * py * h };
+    // A knee keeps the same two-link branch as the foot passes hip height;
+    // choosing purely by outward x flips the entire leg at that crossing.
+    var sign = isLeg ? side : side * px >= 0 ? 1 : -1;
+    var bend = { x: mid.x + sign * px * h, y: mid.y + sign * py * h };
+    if (isLeg && bend.y < 0) {
+      // The other circle intersection has exactly the same segment lengths
+      // and contact endpoint. Never clamp the knee or shrink the leg to hide it.
+      bend = { x: mid.x - sign * px * h, y: mid.y - sign * py * h };
+    }
+    return bend;
+  }
+  function measureJoints(input, frame) {
+    var result = {};
+    if (!frame || !frame.pose || !frame.pose.hip || !frame.pose.shoulder || !frame.points) return result;
+    var d = dims(input);
+    limbs.forEach(function (key) {
+      var isLeg = key[1] === 'f', side = key[0] === 'l' ? -1 : 1;
+      var center = isLeg ? frame.pose.hip : frame.pose.shoulder, end = frame.points[key];
+      if (!end) return;
+      var start = { x: center.x + side * (isLeg ? d.hipWidth : d.shoulderWidth) / 2, y: center.y };
+      var length = isLeg ? d.leg : d.arm;
+      result[key] = { start: start, joint: joint(start, end, length, side, isLeg), end: end, length: length };
+    });
+    return result;
   }
   function bone(points, view, color, width, extra) {
     var p = points.map(function (v) { return project(v, view); });
@@ -176,11 +198,11 @@
     var d = dims(input), hip = frame.pose.hip, shoulder = frame.pose.shoulder, a = {
       lh: { x: shoulder.x - d.shoulderWidth / 2, y: shoulder.y }, rh: { x: shoulder.x + d.shoulderWidth / 2, y: shoulder.y },
       lf: { x: hip.x - d.hipWidth / 2, y: hip.y }, rf: { x: hip.x + d.hipWidth / 2, y: hip.y }
-    }, unit = d.height * view.scale, outline = clamp(unit * .0065, 1.4, 2.8), out = '', armMeasures = measureArms(input, frame);
+    }, unit = d.height * view.scale, outline = clamp(unit * .0065, 1.4, 2.8), out = '', armMeasures = measureArms(input, frame), joints = measureJoints(input, frame);
     var paint = { left: '#ba9ad8', right: '#7928ca', leftLeg: '#c2aad7', rightLeg: '#8b54b6', body: '#e8dcf1', shorts: '#b99ad3', neck: '#ad91c2', face: '#d4bedf', hair: '#4b3659' };
     function limbShape(key, isLeg) {
       var endpoint = frame.points[key]; if (!endpoint) return '';
-      var left = key[0] === 'l', j = joint(a[key], endpoint, isLeg ? d.leg : d.arm, left ? -1 : 1);
+      var left = key[0] === 'l', j = joints[key].joint;
       var start = project(a[key], view), bend = project(j, view), end = project(endpoint, view);
       var fill = isLeg ? (left ? paint.leftLeg : paint.rightLeg) : (left ? paint.left : paint.right);
       var upper = unit * (isLeg ? .029 : .023), knee = unit * (isLeg ? .025 : .019), wrist = unit * (isLeg ? .017 : .014);
@@ -298,5 +320,5 @@
     out += text(margin, height - 29, '原创教学示意 · © Scott1743 · 商用请取得授权 · https://scott1743.github.io/climbing-guide/', { size: 16, color: C.muted });
     return shell({ viewBox: '0 0 ' + width + ' ' + n(height), width: width, height: height }, 'Climbing Guide 候选攀岩解法分镜', '包含起始姿态与每一步手脚移动后的状态。候选顺序不等于真实最佳解法或安全认证。', out, ' width="' + width + '" height="' + n(height) + '"', null, licenseMetadata());
   }
-  return { viewport: viewport, photoRect: photoRect, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, frameAt: frameAt };
+  return { viewport: viewport, photoRect: photoRect, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, measureJoints: measureJoints, frameAt: frameAt };
 });

@@ -17,6 +17,11 @@
   const allowed = (hold, limb) => hold && (hold.type === 'both' || hold.type === (hand(limb) ? 'hand' : 'foot'));
   const key = contacts => LIMBS.map(l => contacts[l]).join('|');
   const now = () => typeof performance !== 'undefined' ? performance.now() : Date.now();
+  function segmentDistance(point, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y, length2 = dx * dx + dy * dy;
+    const t = length2 > EPS ? clamp(((point.x - a.x) * dx + (point.y - a.y) * dy) / length2, 0, 1) : 0;
+    return Math.hypot(point.x - a.x - t * dx, point.y - a.y - t * dy);
+  }
 
   function dimensions(input) {
     const H = input.bodyHeight;
@@ -101,10 +106,12 @@
     const supportArmCost = ['lh', 'rh'].filter(l => l !== movingLimb)
       .reduce((sum, limb) => sum + 1.4 * Math.max(0, ARM_TARGET - pose.reach[limb]) ** 2, 0);
     const legCost = ['lf', 'rf'].reduce((sum, limb) => sum +
-      0.12 * (Math.max(0, pose.reach[limb] - 0.9) / 0.1) ** 2, 0);
+      0.12 * (Math.max(0, pose.reach[limb] - 0.9) / 0.1) ** 2 +
+      2 * Math.max(0, 0.55 - pose.reach[limb]) ** 2, 0);
     const lowHandCost = ['left', 'right'].reduce((sum, key) => sum +
       (pose.armPosture[key].role === 'support' && pose.armPosture[key].mode === 'low-hand-contact' ? 0.6 : 0), 0);
-    return supportArmCost + legCost + lowHandCost;
+    const transferCost = 8 * (Math.max(0, 0.4 - (pose.transferClearance ?? 1)) / 0.4) ** 2;
+    return supportArmCost + legCost + lowHandCost + transferCost;
   }
 
   function startDiagnostic(contacts, ctx) {
@@ -163,6 +170,12 @@
     const supportPadding = (supportFeet.length === 1 ? 0.30 : 0.27) * H;
     const minSupport = Math.min(...supportFeet.map(p => p.x)) - supportPadding;
     const maxSupport = Math.max(...supportFeet.map(p => p.x)) + supportPadding;
+    const footMeanY = (lf.y + rf.y) / 2;
+    const supportHandHeight = Math.max(...points
+      .filter(q => hand(q.limb) && (!extra || q.limb !== extra.limb)).map(q => q.p.y));
+    // With little hand-to-foot space, extending the arms should not dominate
+    // every other posture preference. Roomy stances keep the straight-arm bias.
+    const crowding = clamp((0.75 * H - (supportHandHeight - footMeanY)) / (0.25 * H), 0, 1);
     let best = null, bestQuality = Infinity;
     for (const lean of [0, -0.08 * H, 0.08 * H]) {
       const torsoY = Math.sqrt(dim.torso * dim.torso - lean * lean);
@@ -233,16 +246,48 @@
           if (q >= -EPS) { const dx = Math.sqrt(Math.max(0, q)); add(a.x + dx, y); add(a.x - dx, y); }
         }
       }
+      // Include bent-arm poses inside the reachable region. Boundary vertices
+      // and straight-arm arcs alone can miss a comfortable low-start squat.
+      const supportHandCeiling = Math.min(maxY, ...disks
+        .filter(d => hand(d.limb) && (!extra || d.limb !== extra.limb))
+        .map(d => d.p.y - torsoY));
+      for (const x of [supportMid - 0.15 * H, supportMid, supportMid + 0.15 * H]) {
+        for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+          add(clamp(x, minX, maxX), minY + (Math.max(minY, supportHandCeiling) - minY) * t);
+        }
+      }
       for (const p of candidates) {
         if (p.x < minX - EPS || p.x > maxX + EPS || p.y < minY - EPS || p.y > maxY + EPS) continue;
         if (disks.some(d => (p.x - d.x) ** 2 + (p.y - d.y) ** 2 > d.r * d.r + EPS)) continue;
-        let quality = 0.02 * ((p.x - supportMid) / H) ** 2 + 0.01 * Math.abs(lean) / H;
+        // Hip clearance and leg flexion are preferences, not new reach limits:
+        // a genuine low/sit start remains possible. Do not buy a straight arm
+        // by folding a leg almost completely or dropping the pelvis to a foot.
+        const hipClearance = (p.y - footMeanY) / H;
+        let quality = 20 * crowding * Math.max(0, 0.25 - hipClearance) ** 2 +
+          0.02 * ((p.x - supportMid) / H) ** 2 + 0.01 * Math.abs(lean) / H;
+        let transferClearance = 1;
+        if (extra && extra.fromPose && extra.toPose) {
+          // Prefer body transfers that do not sweep a hip joint directly over
+          // a planted foot: near-zero reach makes a two-link knee spin rapidly.
+          // This is a soft path preference; low starts remain geometrically valid.
+          for (const limb of ['lf', 'rf']) {
+            const oldFoot = map.get(contacts[limb]);
+            const newFoot = limb === extra.limb ? map.get(extra.id) : oldFoot;
+            const offset = side(limb) * dim.hipWidth / 2;
+            const oldCenter = { x: oldFoot.x - offset, y: oldFoot.y };
+            const newCenter = { x: newFoot.x - offset, y: newFoot.y };
+            const clearance = Math.min(segmentDistance(oldCenter, extra.fromPose.hip, p),
+              segmentDistance(newCenter, p, extra.toPose.hip), segmentDistance(p, oldCenter, newCenter)) / dim.leg;
+            transferClearance = Math.min(transferClearance, clearance);
+            quality += 20 * Math.max(0, 0.4 - clearance) ** 2;
+          }
+        }
         const reach = {};
         for (const d of disks) {
           const r = dist(p, d) / d.r;
-          if (!hand(d.limb)) quality += 0.30 * (r - 0.78) ** 2 + 3 * Math.max(0, r - 0.92) ** 2;
+          if (!hand(d.limb)) quality += (0.30 + 2.70 * crowding) * (r - 0.78) ** 2 + 3 * Math.max(0, r - 0.92) ** 2;
           else if (!extra || d.limb !== extra.limb) {
-            quality += 20 * (ARM_TARGET - r) ** 2;
+            quality += (20 - 14 * crowding) * (ARM_TARGET - r) ** 2;
             const drop = (p.y + torsoY - d.p.y) / H;
             // Prefer hands at/above the shoulder, so long arms are not obtained
             // by inventing a downward, mantle-like support. This remains soft:
@@ -253,7 +298,7 @@
         }
         if (quality < bestQuality) {
           bestQuality = quality;
-          best = { hip: { x: p.x, y: p.y }, shoulder: { x: p.x + lean, y: p.y + torsoY }, reach, quality };
+          best = { hip: { x: p.x, y: p.y }, shoulder: { x: p.x + lean, y: p.y + torsoY }, reach, quality, transferClearance };
         }
       }
     }
@@ -343,7 +388,7 @@
           if (!pose) continue;
           // New and old positions of the moving limb must be reachable while
           // the other three contacts remain fixed; no teleporting between poses.
-          const movePose = findPose(node.contacts, ctx, { limb, id: to.id });
+          const movePose = findPose(node.contacts, ctx, { limb, id: to.id, fromPose: node.pose, toPose: pose });
           if (!movePose) continue;
           stats.generated++;
           const distance = dist(from, to), postureCost = routePostureCost(movePose, limb);
