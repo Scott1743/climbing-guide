@@ -22,6 +22,32 @@
     var s = size(input), scale = 600 / s.width, height = s.height * scale;
     return { viewBox: '0 0 696 ' + n(height + 112), width: 696, height: height + 112, wall: { x: 48, y: 44, width: 600, height: height }, scale: scale };
   }
+  // Crop coordinates are normalized to the local source image; the final rectangle uses SVG units.
+  function photoRect(input, photo) {
+    if (!photo || photo.visible === false || typeof photo.href !== 'string' || !/^blob:[^\s<>"']+$/.test(photo.href)) return null;
+    var sourceWidth = finite(photo.width, 0), sourceHeight = finite(photo.height, 0);
+    if (sourceWidth <= 0 || sourceHeight <= 0) return null;
+    var crop = photo.crop || {}, cx = clamp(finite(crop.x, 0), 0, 1), cy = clamp(finite(crop.y, 0), 0, 1);
+    var cw = clamp(finite(crop.width, 1), 0, 1 - cx), ch = clamp(finite(crop.height, 1), 0, 1 - cy);
+    if (cw <= 0 || ch <= 0) return null;
+    var sourceCrop = { x: cx * sourceWidth, y: cy * sourceHeight, width: cw * sourceWidth, height: ch * sourceHeight };
+    var wall = viewport(input).wall, contain = Math.min(wall.width / sourceCrop.width, wall.height / sourceCrop.height);
+    function positive(value) { var result = finite(value, 1); return result > 0 ? result : 1; }
+    var scale = positive(photo.scale), width = sourceCrop.width * contain * scale * positive(photo.stretchX), height = sourceCrop.height * contain * scale * positive(photo.stretchY);
+    var x = wall.x + (wall.width - width) / 2 + finite(photo.offsetX, 0) * wall.width;
+    var y = wall.y + (wall.height - height) / 2 + finite(photo.offsetY, 0) * wall.height;
+    if (![sourceCrop.x, sourceCrop.y, sourceCrop.width, sourceCrop.height, contain, x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0 || sourceCrop.width <= 0 || sourceCrop.height <= 0) return null;
+    return { href: photo.href, x: x, y: y, width: width, height: height, crop: { x: cx, y: cy, width: cw, height: ch }, source: { width: sourceWidth, height: sourceHeight }, sourceCrop: sourceCrop, opacity: clamp(finite(photo.opacity, .65), 0, 1) };
+  }
+  function photoLayer(photo, view) {
+    if (!photo) return '';
+    var id = 'cg-photo-' + (++serial), wall = view.wall, crop = photo.sourceCrop;
+    // The nested viewport clips the selected source crop before wall clipping and pan/scale.
+    return '<defs><clipPath id="' + id + '-wall" clipPathUnits="userSpaceOnUse"><rect x="' + wall.x + '" y="' + wall.y + '" width="' + wall.width + '" height="' + wall.height + '" rx="9"/></clipPath></defs>' +
+      '<g class="route-photo-background" clip-path="url(#' + id + '-wall)" pointer-events="none" aria-hidden="true" opacity="' + photo.opacity + '">' +
+      '<svg id="' + id + '-crop" x="' + photo.x + '" y="' + photo.y + '" width="' + photo.width + '" height="' + photo.height + '" viewBox="' + [crop.x, crop.y, crop.width, crop.height].join(' ') + '" preserveAspectRatio="none" overflow="hidden" pointer-events="none">' +
+      '<image href="' + esc(photo.href) + '" x="0" y="0" width="' + photo.source.width + '" height="' + photo.source.height + '" preserveAspectRatio="none" pointer-events="none"/></svg></g>';
+  }
   function project(pt, view) { return { x: view.wall.x + pt.x * view.scale, y: view.wall.y + view.wall.height - pt.y * view.scale }; }
   function dims(input) {
     var h = finite(input.bodyHeight, 1.7), span = finite(input.armSpan, h);
@@ -45,15 +71,17 @@
   function grid(input, view, opts) {
     opts = opts || {};
     var s = size(input), w = view.wall, out = '<rect width="' + view.width + '" height="' + n(view.height) + '" fill="#fff"/><rect x="' + w.x + '" y="' + w.y + '" width="' + w.width + '" height="' + n(w.height) + '" rx="9" fill="' + C.pale + '" stroke="' + C.line + '"/>';
+    var photo = photoRect(input, opts.photo), gridOpacity = photo ? ' stroke-opacity=".32"' : '';
+    out += photoLayer(photo, view);
     var step = .5;
     for (var x = 0; x <= s.width + .001; x += step) {
       var xp = w.x + x * view.scale;
-      out += '<path d="M' + n(xp) + ' ' + w.y + 'V' + n(w.y + w.height) + '" stroke="' + C.line + '" stroke-width="' + (Math.abs(x - Math.round(x)) < .001 ? 1 : .6) + '"/>';
+      out += '<path d="M' + n(xp) + ' ' + w.y + 'V' + n(w.y + w.height) + '" stroke="' + C.line + '" stroke-width="' + (Math.abs(x - Math.round(x)) < .001 ? 1 : .6) + '"' + gridOpacity + '/>';
       out += text(xp, w.y + w.height + 23, Number(x.toFixed(1)), { size: 13, color: C.muted, anchor: 'middle' });
     }
     for (var y = 0; y <= s.height + .001; y += step) {
       var yp = w.y + w.height - y * view.scale;
-      out += '<path d="M' + w.x + ' ' + n(yp) + 'H' + (w.x + w.width) + '" stroke="' + C.line + '" stroke-width="' + (Math.abs(y - Math.round(y)) < .001 ? 1 : .6) + '"/>';
+      out += '<path d="M' + w.x + ' ' + n(yp) + 'H' + (w.x + w.width) + '" stroke="' + C.line + '" stroke-width="' + (Math.abs(y - Math.round(y)) < .001 ? 1 : .6) + '"' + gridOpacity + '/>';
       out += text(w.x - 11, yp + 4, Number(y.toFixed(1)), { size: 13, color: C.muted, anchor: 'end' });
     }
     out += '<path d="M' + w.x + ' ' + n(w.y + w.height) + 'H' + (w.x + w.width) + '" stroke="' + C.ink + '" stroke-width="3"/>';
@@ -236,7 +264,7 @@
     var opts = options || {}, view = viewport(input), frame = frameAt(input, state, opts);
     var holdOpts = { showLabels: opts.showLabels !== false, showStarts: false, interactive: false, selectedId: opts.selectedId };
     var heading = opts.stepLabel || '候选动作 · 二维姿态示意';
-    var content = grid(input, view, { heading: heading, footnote: armFootnote(input, frame) });
+    var content = grid(input, view, { heading: heading, footnote: armFootnote(input, frame), photo: opts.photo });
     content += motion(input, view, opts) + holds(input, view, holdOpts) + person(input, frame, view, opts);
     content += label(view.wall.x + 12, view.wall.y + 25, frame.phase, { size: 14, color: C.purple, bold: true });
     return shell(view, heading, '手脚位置对应岩点，浅紫为左侧，深紫为右侧。图中人体比例和动作均为二维几何示意，不表示力学安全保证。' + frame.phase, content);
@@ -267,5 +295,5 @@
     out += text(margin, height - 29, '原创教学示意 · MIT · https://scott1743.github.io/climbing-guide/', { size: 16, color: C.muted });
     return shell({ viewBox: '0 0 ' + width + ' ' + n(height), width: width, height: height }, 'Climbing Guide 候选攀岩解法分镜', '包含起始姿态与每一步手脚移动后的状态。候选顺序不等于真实最佳解法或安全认证。', out, ' width="' + width + '" height="' + n(height) + '"');
   }
-  return { viewport: viewport, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, frameAt: frameAt };
+  return { viewport: viewport, photoRect: photoRect, wallSvg: wallSvg, poseSvg: poseSvg, storyboardSvg: storyboardSvg, measureArms: measureArms, frameAt: frameAt };
 });

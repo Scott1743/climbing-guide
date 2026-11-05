@@ -5,7 +5,7 @@
 <title>攀岩线路动作规划器：摆点与 SVG 分镜｜Beta Lab</title>
 <meta name="description" content="在浏览器里摆放岩点，设置身高、臂展和起终点，探索二维攀岩候选动作顺序。支持分步播放、SVG 分镜和点位导入导出，帮助读线与复盘。">
 <meta name="theme-color" content="#7928ca"><link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="route-lab.css?v=straight-arm-20261104">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="route-lab.css?v=photo-20261105"><link rel="stylesheet" href="route-photo.css?v=photo-20261105">
 <link rel="canonical" href="https://scott1743.github.io/climbing-guide/route-lab.html">
 <link rel="sitemap" type="application/xml" href="sitemap.xml">
 <meta name="robots" content="index,follow,max-image-preview:large">
@@ -85,6 +85,7 @@
 <div class="lab-workspace">
 <section class="lab-panel editor-panel" aria-labelledby="editor-title">
 <div class="lab-panel-heading"><div><span class="lab-kicker">01 / SET THE WALL</span><h2 id="editor-title">摆好你的线路</h2></div><span id="hold-count" class="lab-count">0 / 24 点</span></div>
+<div id="photo-controls"></div>
 <div class="lab-tools" role="group" aria-label="岩点绘制工具"><button type="button" data-tool="select" aria-pressed="true">选择 / 拖动</button><button type="button" data-tool="both" aria-pressed="false">＋ 通用点</button><button type="button" data-tool="hand" aria-pressed="false">＋ 手点</button><button type="button" data-tool="foot" aria-pressed="false">＋ 脚点</button></div>
 <p id="tool-help" class="lab-help">拖动岩点改位置。也可选中点，在下方输入精确位置。</p>
 <p id="scale-summary" class="lab-help scale-summary"></p>
@@ -97,13 +98,13 @@
 <section class="lab-panel result-panel" aria-labelledby="result-title"><div class="lab-panel-heading"><div><span class="lab-kicker">02 / EXPLORE THE BETA</span><h2 id="result-title">看看怎样换点</h2></div><span class="model-badge">几何草案</span></div>
 <p class="solve-intro">每次只换一只手或脚，其余三个接触点保留。最终需要双手都到达终点。</p><button id="solve-route" class="primary solve-button" type="button">生成候选解法 <span>↗</span></button>
 <p id="solver-status" class="solver-status" role="status" aria-live="polite">先试试示例，再画自己的线路。</p>
-<div id="result-content" hidden><div id="route-options" class="route-options" aria-label="候选方案"></div><p id="route-overview" class="lab-help"></p><div id="mobile-preview" class="mobile-preview" aria-label="当前候选动作图"></div><div class="step-heading"><span id="step-number">出发姿势</span><h3 id="step-title"></h3></div><p id="step-reason" class="step-reason"></p><div id="contact-summary" class="contact-summary"></div><section class="arm-posture" aria-label="手臂姿势"><b class="arm-title">姿势目标：支撑臂尽量伸展</b><div id="arm-angles" class="arm-angles"></div><p id="arm-note"></p><small>180° 表示图示完全伸直；出手和调整位置时，不要求每一帧双臂伸直。</small></section><div class="playback-tools"><button id="previous-step" type="button" aria-label="上一步">← 上一步</button><button id="play-route" type="button">播放动作</button><button id="next-step" type="button" aria-label="下一步">下一步 →</button></div><label class="step-progress">动作进度<input id="route-progress" type="range" min="0" max="1" step="1" value="0"></label><div class="export-row"><button id="export-svg" type="button">下载完整 SVG 分镜 ↓</button><button id="export-frame" type="button">下载当前姿势 ↓</button></div><details class="steps-detail" open><summary>完整动作顺序</summary><ol id="route-steps" class="route-steps"></ol></details><p class="lab-help">画面里的髋、肩和肘膝是简化示意；动画只是连接姿势，不是人体动力学仿真。先在地面讨论解法，再由现场教练判断。</p></div>
+<div id="result-content" hidden><div id="route-options" class="route-options" aria-label="候选方案"></div><p id="route-overview" class="lab-help"></p><div id="mobile-preview" class="mobile-preview" aria-label="当前候选动作图"></div><div class="step-heading"><span id="step-number">出发姿势</span><h3 id="step-title"></h3></div><p id="step-reason" class="step-reason"></p><div id="contact-summary" class="contact-summary"></div><section class="arm-posture" aria-label="手臂姿势"><b class="arm-title">姿势目标：支撑臂尽量伸展</b><div id="arm-angles" class="arm-angles"></div><p id="arm-note"></p><small>180° 表示图示完全伸直；出手和调整位置时，不要求每一帧双臂伸直。</small></section><div class="playback-tools"><button id="previous-step" type="button" aria-label="上一步">← 上一步</button><button id="play-route" type="button">播放动作</button><button id="next-step" type="button" aria-label="下一步">下一步 →</button></div><label class="step-progress">动作进度<input id="route-progress" type="range" min="0" max="1" step="1" value="0"></label><div class="export-row"><button id="export-svg" type="button">下载完整 SVG 分镜 ↓</button><button id="export-frame" type="button">下载当前姿势 ↓</button></div><p class="lab-help">SVG 分镜和点位 JSON 仅导出线路图解，不包含本地照片。</p><details class="steps-detail" open><summary>完整动作顺序</summary><ol id="route-steps" class="route-steps"></ol></details><p class="lab-help">画面里的髋、肩和肘膝是简化示意；动画只是连接姿势，不是人体动力学仿真。先在地面讨论解法，再由现场教练判断。</p></div>
 <div id="result-empty" class="result-empty"><div class="empty-mark" aria-hidden="true">↗</div><h3 id="empty-title">让每一只手脚都有去处</h3><p id="empty-copy">设置四个起步接触和一个终点。生成后，你可以切换方案、查看每一步，并把整条动作导出成 SVG。</p><button id="empty-traverse" type="button">试试横移示例 →</button></div>
 </section>
 </div>
 <section id="model-notes" class="model-notes"><div><span class="lab-kicker">READ THE MODEL</span><h2>它能帮你想动作，<br>还不能替你判路线。</h2></div><div class="model-grid"><article><h3>它检查什么</h3><p>岩点距离、手脚类型、身高与臂展对应的简化伸展范围。搜索一次只改变一个接触，并尝试为换点前后找到共同的身体位置。</p></article><article><h3>它没有测量什么</h3><p>岩点形状与方向、墙面仰角、抓握力、摩擦、柔韧性、关节负荷和落区。转髋、落膝、旗式涉及三维关系，这一版不自动判定这些技术。</p></article><article><h3>怎样读候选排序</h3><p>排序考虑换点次数、支撑臂屈曲、腿部伸展和无效移动。姿势优先让支撑臂接近伸直，受点位限制时保留屈臂。它不等于最小肌肉用力，也不保证是全部可行解中的最优。</p></article><article><h3>没找到方案怎么办</h3><p>先检查标尺、四个起点和点的类型，再核对中间是否漏了脚点。搜索有时间与状态数量限制，“没找到”不代表人一定爬不了。</p></article></div></section>
-<p class="lab-privacy">点位与设置只保存在当前浏览器。计算在你的设备上完成，不上传照片或点位数据。</p>
+<p class="lab-privacy">照片、点位与设置只保存在当前浏览器。照片只保留一张，新照片会替换旧照片；计算与图片处理都在你的设备上完成，不上传到 GitHub，也不占用网站托管存储。清除本站浏览器数据会一并清除本地照片。</p>
 </main><footer>Climbing Guide <span>先理解，再尝试。</span><a href="index.html">返回教程 ↗</a><div class="page-share"><button type="button" data-share-page hidden>分享页面 ↗</button><span role="status" aria-live="polite"></span><a href="sitemap.xml">站点地图</a></div></footer>
-<script src="route-solver.js?v=straight-arm-20261104"></script><script src="route-render.js?v=straight-arm-20261104"></script><script src="route-lab.js?v=straight-arm-20261104"></script>
+<script src="route-solver.js?v=photo-20261105"></script><script src="route-render.js?v=photo-20261105"></script><script src="route-photo.js?v=photo-20261105"></script><script src="route-photo-ui.js?v=photo-20261105"></script><script src="route-lab.js?v=photo-20261105"></script>
 <script src="share.js" defer></script>
 </body></html>
