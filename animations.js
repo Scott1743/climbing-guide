@@ -7,11 +7,11 @@
   var base = pose([158,194],[157,133],[91,76],[218,76],[99,119],[216,119],[115,231],[211,231],[103,275],[223,275]);
   function P(changes) { var out={}; Object.keys(base).forEach(function(k){out[k]=base[k].slice();}); Object.keys(changes).forEach(function(k){out[k]=changes[k];}); return out; }
   var lessons = {
-    swap: { title:'换脚 留出空间再交接', view:'swap', stages:[
-      ['左脚先承重','选宽大、低处的脚点练习；双手帮助稳定，先看清可用位置。'],
-      ['挪出空间，右脚靠近','承重脚小幅调整，给右脚鞋尖留位置；身体保持平稳。'],
-      ['两脚短暂交接','右脚轻放到可用面，再逐步把重量转过去；不是突然踢开原来的脚。'],
-      ['右脚压稳，左脚离开','确认新脚有支撑，再移走旧脚。先学这种可控交接，不急着跳换脚。']
+    swap: { title:'换脚 脚尖叠脚尖再替换', view:'swap', storyboard:[0,1,3], stages:[
+      ['旧脚先踩住','先看清旧脚鞋尖与脚点的接触区；双手帮助保持身体稳定。'],
+      ['新脚尖叠在旧脚尖上','新鞋尖从上方叠住旧鞋尖，先对准位置。此时新脚还没有直接踩到岩点。'],
+      ['旧脚抽出，新脚随之落点','旧脚从下面向外抽离，新脚尖随之下落到同一接触区；不是两只脚并排挤在点上。'],
+      ['新脚落稳，完成交接','新脚鞋尖落在原来的位置，逐渐接过压力，再继续下一步动作。']
     ]},
     feet: { title:'精准踩点', view:'feet', stages:[
       ['看准接触点','视线留在目标脚点上；先想清楚鞋尖落在哪里。'],
@@ -110,18 +110,34 @@
     if(q>=2.5)s+=label(160,308,'试爬后：调整脚点或顺序','middle');
     return s;
   }
+  function swapPose(q){
+    function ease(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);}
+    // Hold the stacked pose across q=1 before withdrawing the lower shoe.
+    var approach=ease(q/.82),withdraw=ease((q-1.2)/.65),settle=ease((q-1.42)/.58),away=ease(q-2);
+    return {old:[180-65*withdraw-7*away,234-36*away],next:[lerp(220,176,approach)+4*settle,lerp(139,219,approach)+15*settle],angle:18*(1-settle),stacked:q>=.82&&q<=1.2,landed:q>=2};
+  }
   function swapScene(id,q){
-    var a=Math.min(q,1),b=Math.max(0,Math.min(q-1,1)),c=Math.max(0,Math.min(q-2,1));
-    var lx=lerp(164,145,a)-48*c,ly=233-52*c,rx=lerp(262,193,a)-12*b-22*c,ry=lerp(153,198,a)+35*b;
-    function shoe(x,y,mirror,color){return '<g transform="translate('+x+' '+y+') scale('+(mirror?-1:1)+' 1)"><path d="M0 0 C-7 -12 -24 -18 -38 -18 L-72 -31 L-88 -21 L-86 -3 Q-40 4 0 0 Z" fill="'+color+'" stroke="#17121f" stroke-width="2.5"/><path d="M-86 -3 Q-40 4 0 0" fill="none" stroke="#17121f" stroke-width="5"/></g>';}
-    var s=text(18,28,'大脚点放大：小幅挤脚与交接');
-    s+='<path d="M 133 237 L 198 237 L 187 256 L 143 253 Z" fill="#bd8ce6" stroke="#74459b" stroke-width="2"/>';
-    s+=shoe(lx,ly,false,'#dcbdf5')+shoe(rx,ry,true,'#e7e5dd');
-    s+=label(65,121,'原承重脚','middle')+label(254,121,'要换上的脚','middle');
-    if(q<2)s+=arrow(id,160,157,lx,211,COLORS.orange);else s+=arrow(id,165,157,rx,211,COLORS.orange);
-    if(q>=1&&q<2)s+=arrow(id,220,184,190,215);
-    s+=label(163,289,q<2?'保持双手辅助稳定':'确认新脚踩稳，再移走旧脚','middle');
-    return s;
+    var p=swapPose(q);
+    function shoe(key,point,angle,color){return '<g data-swap-shoe="'+key+'" transform="translate('+point[0]+' '+point[1]+') rotate('+angle+')"><path d="M0 0 L-82 0 Q-92 -2 -92 -10 L-86 -26 L-65 -30 L-48 -16 L-20 -12 L-3 -12 Q0 -12 0 -8 Z" fill="'+color+'" stroke="#17121f" stroke-width="2"/><path d="M-87 -2 Q-45 1 0 0" fill="none" stroke="#17121f" stroke-width="4"/><path d="M-66 -25 L-48 -13 M-58 -20 L-40 -12" stroke="white" stroke-width="2"/><path d="M-72 -30 L-69 -51 L-49 -48 L-52 -20" fill="'+color+'" stroke="#17121f" stroke-width="2"/></g>';}
+    var s='<g data-swap-phase="'+(p.stacked?'stacked':p.landed?'landed':q<1?'approach':'withdraw')+'">';
+    s+=text(18,27,'侧面放大：两只鞋尖朝向岩壁');
+    s+='<path d="M 230 56 L230 261" stroke="#ded6e9" stroke-width="6"/>'+text(238,76,'墙');
+    s+='<path d="M 164 237 L230 237 L230 254 L171 256 Z" fill="#bd8ce6" stroke="#74459b" stroke-width="2"/>';
+    s+='<path d="M169 236 H184" stroke="#ad247c" stroke-width="4" stroke-linecap="round"/>';
+    s+=shoe('old',p.old,0,'#c7a0e8')+shoe('new',p.next,p.angle,'#f2c58f');
+    // Color and leader lines identify the shoes even in the overlap frame.
+    s+='<circle cx="23" cy="58" r="5" fill="#f2c58f" stroke="#17121f"/>'+text(35,63,'新脚（上方）');
+    s+='<circle cx="23" cy="82" r="5" fill="#c7a0e8" stroke="#17121f"/>'+text(35,87,'旧脚（下方）');
+    if(p.stacked){
+      s+='<circle data-swap-overlap cx="175" cy="223" r="19" fill="none" stroke="#ad247c" stroke-width="2" stroke-dasharray="4 3"/>';
+      s+='<path d="M195 217 L213 191 L290 191" fill="none" stroke="#ad247c" stroke-width="1.5"/>';
+      s+=text(291,182,'脚尖叠脚尖','end');
+    }else if(q<.82){s+=arrow(id,260,132,203,200);}
+    else if(!p.landed){s+=arrow(id,116,262,69,262,COLORS.orange)+arrow(id,203,204,203,230);}
+    else{s+=arrow(id,195,184,183,217,COLORS.orange);}
+    s+=text(160,290,p.stacked?'新脚在旧鞋上，还没有踩到岩点':p.landed?'新脚落到原来的接触区':q<1?'旧脚留在点上，新脚从上方靠近':'旧脚向外抽，新脚随之下落','middle','style="font-size:12px"');
+    s+=text(160,313,'只放大脚尖交接 · 双手帮助保持稳定','middle','style="font-size:11px;fill:#6d6478"');
+    return s+'</g>';
   }
   function laybackScene(id,q){
     var t=Math.min(1,q),px=lerp(146,112,t),py=lerp(184,194,t); if(q>1){py-=16*(q-1);}
@@ -163,7 +179,7 @@
   }
   window.mountClimbingStoryboard = function(container,type){
     var lesson=lessons[type]; if(!container||!lesson)return; injectStyles();
-    var last=lesson.stages.length-1,steps=[0,Math.ceil(last/2),last];
+    var last=lesson.stages.length-1,steps=lesson.storyboard||[0,Math.ceil(last/2),last];
     if(last===2)steps=[0,1,2];
     container.innerHTML=steps.map(function(n,i){var id='story-'+(++serial);return '<figure class="frame-step climb-anim"><figcaption><span>'+(i+1)+'</span> '+lesson.stages[n][0]+'</figcaption>'+frameMarkup(id,lesson,n)+'<p>'+lesson.stages[n][1]+'</p></figure>';}).join('');
   };
@@ -178,7 +194,7 @@
     var stage=container.querySelector('.ca-stage'),canvas=container.querySelector('.ca-canvas'),detail=container.querySelector('.ca-detail'),play=container.querySelector('.ca-play'),prev=container.querySelector('.ca-prev'),next=container.querySelector('.ca-next'),count=container.querySelector('.ca-count'),range=container.querySelector('.ca-range'),announced=-1;
     function draw(){
       q=Math.max(0,Math.min(last,q));canvas.innerHTML=frameMarkup(id,lesson,q);
-      var n=Math.min(last,Math.round(q));stage.textContent=(n+1)+' · '+lesson.stages[n][0];
+      var n=Math.min(last,lesson.view==='swap'?(q<.82?0:q<1.2?1:q<3?2:3):Math.round(q));stage.textContent=(n+1)+' · '+lesson.stages[n][0];
       if(n!==announced){detail.textContent=lesson.stages[n][1];announced=n;}
       count.textContent=(n+1)+' / '+(last+1);range.value=Math.round(q*100);prev.disabled=q<=0;next.disabled=q>=last;
       range.setAttribute('aria-valuetext','第 '+(n+1)+' 步：'+lesson.stages[n][0]);
